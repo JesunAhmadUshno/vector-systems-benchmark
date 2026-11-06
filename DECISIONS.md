@@ -106,3 +106,26 @@ after each churn cell) through a checkpoint callback. The measurement
 protocol is unchanged: same cells, same order, same repetitions. Only
 the write timing changed. The Qdrant backend was then re-run in full
 under the same protocol.
+
+## D10: Qdrant query count and repetitions reduced, with disclosure
+
+The full-protocol Qdrant re-run (300 queries, 3 repetitions) passed 60
+minutes without finishing its main cells phase on this VM: local mode
+answers each query with a Python exact scan over 58,999 points, at
+roughly 0.7 seconds per query and rising with filter complexity. The
+client itself warns that local mode is not recommended above 20,000
+points. Waiting for the full cell set was projected at about 90
+minutes for this backend alone, after two earlier attempts had already
+been lost (slow on-disk ingestion, then the VM reboot of D9).
+
+Verdict: the Qdrant backend runs with 100 queries and 2 repetitions;
+FAISS and pgvector keep the full 300 and 3. The deviation is recorded
+here before the reduced run starts, and it is also visible in
+results_qdrant/env.json (n_queries 100, reps 2) next to the main
+results/env.json (300, 3). Effects, stated plainly: Qdrant recall is
+exact by construction in local mode, so the smaller sample does not
+change any recall conclusion; Qdrant latency percentiles rest on 100
+queries per cell instead of 300, so their tails are less stable; the
+hybrid cell is unchanged (it uses its own fixed set of 250 questions
+for every backend). No Qdrant number from the abandoned full-protocol
+attempts is used anywhere.
