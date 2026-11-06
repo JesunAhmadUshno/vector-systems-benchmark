@@ -1,0 +1,219 @@
+{
+ "cells": [
+  {
+   "cell": "none",
+   "filter": "None",
+   "selectivity": 1.0,
+   "n_queries": 300,
+   "recall10": 0.9666666666666667,
+   "recall_runs": [
+    0.9666666666666667,
+    0.9666666666666667,
+    0.9666666666666667
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 0.17436200005249702,
+   "p95_ms": 0.4724110500319512,
+   "reps": 3,
+   "backend": "faiss",
+   "arm": "main"
+  },
+  {
+   "cell": "tenant_t0",
+   "filter": "('tenant', 't0')",
+   "selectivity": 0.490838827776742,
+   "n_queries": 300,
+   "recall10": 0.9520000000000006,
+   "recall_runs": [
+    0.9520000000000006,
+    0.9520000000000006,
+    0.9520000000000006
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 9.941926500005138,
+   "p95_ms": 68.8335713999038,
+   "reps": 3,
+   "backend": "faiss",
+   "arm": "main"
+  },
+  {
+   "cell": "tenant_t2",
+   "filter": "('tenant', 't2')",
+   "selectivity": 0.11871387650638146,
+   "n_queries": 300,
+   "recall10": 0.8676666666666677,
+   "recall_runs": [
+    0.8676666666666677,
+    0.8676666666666677,
+    0.8676666666666677
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 4.752601000006962,
+   "p95_ms": 44.31117460001134,
+   "reps": 3,
+   "backend": "faiss",
+   "arm": "main"
+  },
+  {
+   "cell": "tenant_t5",
+   "filter": "('tenant', 't5')",
+   "selectivity": 0.010508652689028628,
+   "n_queries": 300,
+   "recall10": 0.4126666666666668,
+   "recall_runs": [
+    0.4126666666666668,
+    0.4126666666666668,
+    0.4126666666666668
+   ],
+   "shortfall_rate": 0.26666666666666666,
+   "mean_returned": 9.27,
+   "p50_ms": 4.437198000005083,
+   "p95_ms": 68.69839259994137,
+   "reps": 3,
+   "backend": "faiss",
+   "arm": "main"
+  },
+  {
+   "cell": "article_group",
+   "filter": "('article_in', ['New_York_City', 'Middle_Ages'])",
+   "selectivity": 0.012610383226834353,
+   "n_queries": 300,
+   "recall10": 0.35599999999999987,
+   "recall_runs": [
+    0.35599999999999987,
+    0.35599999999999987,
+    0.35599999999999987
+   ],
+   "shortfall_rate": 0.44,
+   "mean_returned": 7.723333333333334,
+   "p50_ms": 3.656912999929318,
+   "p95_ms": 65.39310504992955,
+   "reps": 3,
+   "backend": "faiss",
+   "arm": "main"
+  }
+ ],
+ "churn": [
+  {
+   "cell": "post_churn_none",
+   "filter": "None",
+   "selectivity": 1.0,
+   "n_queries": 300,
+   "recall10": 0.8656666666666697,
+   "recall_runs": [
+    0.8656666666666697,
+    0.8656666666666697,
+    0.8656666666666697
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 0.15998449998733122,
+   "p95_ms": 0.2989543999206035,
+   "reps": 3,
+   "backend": "faiss",
+   "arm": "raw",
+   "stale_rate": 0.11333333333333333,
+   "pre_churn_recall10": 0.9666666666666667
+  },
+  {
+   "cell": "post_churn_tenant_t5",
+   "filter": "('tenant', 't5')",
+   "selectivity": 0.010508652689028628,
+   "n_queries": 300,
+   "recall10": 0.39133333333333375,
+   "recall_runs": [
+    0.39133333333333375,
+    0.39133333333333375,
+    0.39133333333333375
+   ],
+   "shortfall_rate": 0.29333333333333333,
+   "mean_returned": 9.246666666666666,
+   "p50_ms": 3.7586705000194343,
+   "p95_ms": 5.318861899922925,
+   "reps": 3,
+   "backend": "faiss",
+   "arm": "raw",
+   "stale_rate": 0.10273972602739725,
+   "pre_churn_recall10": 0.4126666666666668
+  },
+  {
+   "cell": "post_churn_none",
+   "filter": "None",
+   "selectivity": 1.0,
+   "n_queries": 300,
+   "recall10": 0.9576666666666672,
+   "recall_runs": [
+    0.9576666666666672,
+    0.9576666666666672,
+    0.9576666666666672
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 12.601558999904228,
+   "p95_ms": 23.920121250034757,
+   "reps": 3,
+   "backend": "faiss",
+   "arm": "bookkeeping",
+   "stale_rate": 0.0,
+   "pre_churn_recall10": 0.9666666666666667
+  },
+  {
+   "cell": "post_churn_tenant_t5",
+   "filter": "('tenant', 't5')",
+   "selectivity": 0.010508652689028628,
+   "n_queries": 300,
+   "recall10": 0.39133333333333375,
+   "recall_runs": [
+    0.39133333333333375,
+    0.39133333333333375,
+    0.39133333333333375
+   ],
+   "shortfall_rate": 0.4033333333333333,
+   "mean_returned": 8.82,
+   "p50_ms": 5.261198499965758,
+   "p95_ms": 9.744629500050905,
+   "reps": 3,
+   "backend": "faiss",
+   "arm": "bookkeeping",
+   "stale_rate": 0.0,
+   "pre_churn_recall10": 0.4126666666666668
+  }
+ ],
+ "trap": [],
+ "hybrid": {
+  "faiss": {
+   "n_questions_sampled": 250,
+   "n_questions_scored": 250,
+   "arms": {
+    "dense": {
+     "ndcg10": 0.3739985014131934,
+     "recall100": 0.5516730158730159
+    },
+    "bm25_shared": {
+     "ndcg10": 0.42654359241523365,
+     "recall100": 0.49467460317460316
+    },
+    "hybrid": {
+     "ndcg10": 0.42077019650764885,
+     "recall100": 0.5786111111111111
+    }
+   },
+   "fusion": "application-level RRF over FAISS dense ranking and shared BM25 ranking"
+  }
+ },
+ "tuning": {
+  "faiss": {
+   "ladder": [
+    {
+     "breadth": 40,
+     "recall10": 0.9666666666666667
+    }
+   ],
+   "chosen": 40
+  }
+ },
+ "blocked": []
+}
