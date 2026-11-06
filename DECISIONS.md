@@ -68,6 +68,22 @@ defaults.
 Reason: H1 is a claim about the gap between the two. Measuring only one
 side would either hide the trap or hide the fix.
 
+## D8: Qdrant local mode storage variant (amendment, recorded before any Qdrant result existed)
+
+Options: embedded local mode on disk (SQLite store, as first written);
+embedded local mode in memory.
+Verdict: in memory.
+Reason: the on-disk variant ingested about 1,000 points per minute on
+this VM (measured directly in its store: 26,622 of 58,999 points after
+about 27 minutes), which put the full study out of reach. The local
+engine, its search semantics and its limitations are the same in both
+variants; only the storage medium changes. The amendment was made and
+committed before a single Qdrant number was measured, so it cannot be
+result-driven. SPEC.md carries the matching amendment note. The client
+also warns that payload indexes have no effect in local mode; the setup
+calls are kept for parity with the server configuration, and the warning
+is recorded in AUDIT.md.
+
 ## D7: Hybrid fusion location
 
 Options: one shared fusion implementation for all backends; each
@@ -78,3 +94,15 @@ hybrid. The sparse encoder and the RRF constant (k = 60) are shared, so
 the comparison stays about systems. The pgvector lexical arm uses
 PostgreSQL full-text search, its native path, and that exception is
 named in METHODS.md.
+
+## D9: Per-phase result checkpoints
+
+The first full Qdrant run was lost when the VM rebooted about 60
+minutes into the measurement: the runner wrote results only when a
+whole backend finished, so no Qdrant number survived. No number from
+that attempt is used anywhere. The runner now flushes the results
+file after every phase (after the main cells, after the hybrid cell,
+after each churn cell) through a checkpoint callback. The measurement
+protocol is unchanged: same cells, same order, same repetitions. Only
+the write timing changed. The Qdrant backend was then re-run in full
+under the same protocol.

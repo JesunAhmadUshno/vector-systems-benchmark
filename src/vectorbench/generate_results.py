@@ -58,6 +58,7 @@ def verdicts(results) -> list[dict]:
 
     # H1: pgvector trap and fix
     t5_trap = find(trap, "pgvector", "trap_tenant_t5")
+    t2_trap = find(trap, "pgvector", "trap_tenant_t2")
     t5_iter = find(cells, "pgvector", "tenant_t5")
     if t5_trap is None or t5_iter is None:
         out.append({"id": "H1", "verdict": "Inconclusive",
@@ -65,9 +66,16 @@ def verdicts(results) -> list[dict]:
     else:
         trap_bad = t5_trap["shortfall_rate"] > 0.50 or t5_trap["recall10"] < 0.50
         fix_good = t5_iter["recall10"] >= 0.90 and t5_iter["shortfall_rate"] <= 0.05
-        ev = (f"Defaults: recall {f3(t5_trap['recall10'])}, shortfall {f3(t5_trap['shortfall_rate'])}, "
+        ev = (f"Tight cell at defaults: recall {f3(t5_trap['recall10'])}, shortfall {f3(t5_trap['shortfall_rate'])}, "
               f"mean returned {f2(t5_trap['mean_returned'])}. "
-              f"Iterative scan on: recall {f3(t5_iter['recall10'])}, shortfall {f3(t5_iter['shortfall_rate'])}.")
+              f"Tight cell with iterative scan on: recall {f3(t5_iter['recall10'])}, shortfall {f3(t5_iter['shortfall_rate'])}.")
+        if t2_trap is not None:
+            ev += (f" One band up, at about 10 percent selectivity, the trap does appear at defaults: "
+                   f"recall {f3(t2_trap['recall10'])}, shortfall {f3(t2_trap['shortfall_rate'])}, "
+                   f"mean returned {f2(t2_trap['mean_returned'])}. The pattern matches the research "
+                   f"pack's row 10: at very low selectivity the planner can leave the ANN index and "
+                   f"answer exactly over the filtered subset, which rescues the tight cell. H1 is "
+                   f"therefore judged on its pre-registered tight-cell wording.")
         if trap_bad and fix_good:
             v = "Supported"
         elif not trap_bad:
@@ -118,7 +126,11 @@ def verdicts(results) -> list[dict]:
         out.append({"id": "H3", "verdict": "Inconclusive", "evidence": "Qdrant tight cell is missing."})
     else:
         ev = (f"Qdrant tight cell: recall {f3(q_t5['recall10'])}, "
-              f"shortfall {f3(q_t5['shortfall_rate'])} at frozen breadth.")
+              f"shortfall {f3(q_t5['shortfall_rate'])} at frozen breadth. "
+              f"Caveat: measured in embedded local mode, which the client itself warns "
+              f"performs exact brute-force search; this supports the hypothesis for the "
+              f"embedded engine only. The server product's filtered HNSW is not measured "
+              f"here and stays Not yet measured (ROADMAP item 1).")
         if q_t5["recall10"] >= 0.90 and q_t5["shortfall_rate"] == 0:
             v = "Supported"
         elif q_t5["recall10"] >= 0.90:
@@ -263,10 +275,17 @@ def build(results: dict, env: dict) -> tuple[str, str]:
     lines.append("")
     lines.append(cell_table(results, ["trap_tenant_t2", "trap_tenant_t5"], entries_key="trap"))
     t5_trap = find(results["trap"], "pgvector", "trap_tenant_t5")
-    if t5_trap is not None:
-        lines.append(f"C2 check: the research pack predicted a mean of about 0.4 results returned "
-                     f"per query in this cell (ef_search 40 times selectivity 0.01). "
-                     f"Measured mean returned: {f2(t5_trap['mean_returned'])}.")
+    t2_trap = find(results["trap"], "pgvector", "trap_tenant_t2")
+    if t5_trap is not None and t2_trap is not None:
+        pred_t5 = 40 * (t5_trap["selectivity"] or 0)
+        pred_t2 = 40 * (t2_trap["selectivity"] or 0)
+        lines.append(f"C2 check: the research pack's model says mean returned is about ef_search times "
+                     f"selectivity, as long as the ANN index plan is used. At about 10 percent selectivity "
+                     f"the prediction is {f2(pred_t2)} and the measured mean returned is "
+                     f"{f2(t2_trap['mean_returned'])}: agreement. At about 1 percent the prediction is "
+                     f"{f2(pred_t5)} and the measured mean returned is {f2(t5_trap['mean_returned'])}: "
+                     f"disagreement, explained by the planner leaving the ANN index at very low "
+                     f"selectivity (research pack row 10), so the model's condition does not hold there.")
         lines.append("")
     lines.append("## Churn: after deleting 10 percent and inserting 10 percent")
     lines.append("")

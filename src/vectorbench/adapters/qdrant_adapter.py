@@ -1,8 +1,11 @@
-"""Qdrant adapter: qdrant-client in embedded local mode on disk.
+"""Qdrant adapter: qdrant-client in embedded local mode (in memory).
 
 Setup choices (research pack rows 14, 17, 18):
 - Payload indexes on `tenant` and `article` are created before ingestion,
-  so filter-aware graph edges can be built during indexing.
+  so filter-aware graph edges can be built during indexing. The client
+  itself warns that payload indexes have no effect in local mode; the
+  call is kept so the harness mirrors the server setup, and the warning
+  is recorded in AUDIT.md.
 - Points carry a dense vector and a sparse vector built from the shared
   BM25 encoder. The hybrid arm uses the Query API with RRF fusion.
 - Deletes are tombstones in the real engine; local mode applies the same
@@ -11,6 +14,11 @@ Setup choices (research pack rows 14, 17, 18):
 Local mode is an embedded implementation, not the network server. Its
 latency excludes network cost and its internals differ from the server
 build. SPEC.md names this as a limitation wherever latency is quoted.
+The in-memory variant is used because the on-disk variant's SQLite
+write path ingested about 1,000 points per minute on this VM (measured:
+26,622 of 58,999 points in about 27 minutes), which made the full study
+impractical; the local engine and its semantics are the same in both
+variants. See DECISIONS.md, D8.
 """
 
 from __future__ import annotations
@@ -27,8 +35,8 @@ COLLECTION = "chunks"
 class QdrantAdapter(Adapter):
     name = "qdrant"
 
-    def __init__(self, path: str, dim: int, bm25=None, m: int = 32, ef_construct: int = 200):
-        self.client = QdrantClient(path=path)
+    def __init__(self, path: str | None, dim: int, bm25=None, m: int = 32, ef_construct: int = 200):
+        self.client = QdrantClient(location=":memory:") if path is None else QdrantClient(path=path)
         self.dim = dim
         self.bm25 = bm25
         self.hnsw_ef: int | None = None
@@ -71,7 +79,10 @@ class QdrantAdapter(Adapter):
         return points
 
     def _upsert(self, ids: list[int], vectors: np.ndarray, payloads: list[dict]) -> None:
-        batch = 256
+        # Large batches: local mode stores points in SQLite, and small
+        # transactions carry heavy journal and page-rewrite costs on this
+        # filesystem. 4096 points per call measured far faster per point.
+        batch = 4096
         for start in range(0, len(ids), batch):
             pts = self._points(ids[start:start + batch], vectors[start:start + batch], payloads[start:start + batch])
             self.client.upsert(collection_name=COLLECTION, points=pts, wait=True)

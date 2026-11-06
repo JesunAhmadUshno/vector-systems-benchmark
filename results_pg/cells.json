@@ -1,0 +1,216 @@
+{
+ "cells": [
+  {
+   "cell": "none",
+   "filter": "None",
+   "selectivity": 1.0,
+   "n_queries": 300,
+   "recall10": 0.9780000000000001,
+   "recall_runs": [
+    0.9780000000000001,
+    0.9780000000000001,
+    0.9780000000000001
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 1.554786500037153,
+   "p95_ms": 3.049367049834474,
+   "reps": 3,
+   "backend": "pgvector",
+   "arm": "iterative"
+  },
+  {
+   "cell": "tenant_t0",
+   "filter": "('tenant', 't0')",
+   "selectivity": 0.490838827776742,
+   "n_queries": 300,
+   "recall10": 1.0,
+   "recall_runs": [
+    1.0,
+    0.9716666666666669,
+    0.9686666666666669
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 2.3707445002401073,
+   "p95_ms": 99.93998720035508,
+   "reps": 3,
+   "backend": "pgvector",
+   "arm": "iterative"
+  },
+  {
+   "cell": "tenant_t2",
+   "filter": "('tenant', 't2')",
+   "selectivity": 0.11871387650638146,
+   "n_queries": 300,
+   "recall10": 0.9786666666666669,
+   "recall_runs": [
+    0.9786666666666669,
+    0.9786666666666669,
+    0.9786666666666669
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 4.00933150012861,
+   "p95_ms": 48.539109299645155,
+   "reps": 3,
+   "backend": "pgvector",
+   "arm": "iterative"
+  },
+  {
+   "cell": "tenant_t5",
+   "filter": "('tenant', 't5')",
+   "selectivity": 0.010508652689028628,
+   "n_queries": 300,
+   "recall10": 1.0,
+   "recall_runs": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 0.9024635000969283,
+   "p95_ms": 5.683057200394621,
+   "reps": 3,
+   "backend": "pgvector",
+   "arm": "iterative"
+  },
+  {
+   "cell": "article_group",
+   "filter": "('article_in', ['New_York_City', 'Middle_Ages'])",
+   "selectivity": 0.012610383226834353,
+   "n_queries": 300,
+   "recall10": 0.9879999999999995,
+   "recall_runs": [
+    0.9879999999999995,
+    0.9879999999999995,
+    0.9879999999999995
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 68.74553499983449,
+   "p95_ms": 179.8435856496781,
+   "reps": 3,
+   "backend": "pgvector",
+   "arm": "iterative"
+  }
+ ],
+ "churn": [
+  {
+   "cell": "post_churn_none",
+   "filter": "None",
+   "selectivity": 1.0,
+   "n_queries": 300,
+   "recall10": 0.9763333333333336,
+   "recall_runs": [
+    0.9763333333333336,
+    0.9763333333333336,
+    0.9763333333333336
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 1.9072645000051125,
+   "p95_ms": 3.9860006998424073,
+   "reps": 3,
+   "backend": "pgvector",
+   "arm": "iterative",
+   "stale_rate": 0.0,
+   "pre_churn_recall10": 0.9780000000000001
+  },
+  {
+   "cell": "post_churn_tenant_t5",
+   "filter": "('tenant', 't5')",
+   "selectivity": 0.010508652689028628,
+   "n_queries": 300,
+   "recall10": 1.0,
+   "recall_runs": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 1.3981920001242543,
+   "p95_ms": 8.445954800345136,
+   "reps": 3,
+   "backend": "pgvector",
+   "arm": "iterative",
+   "stale_rate": 0.0,
+   "pre_churn_recall10": 1.0
+  }
+ ],
+ "trap": [
+  {
+   "cell": "trap_tenant_t2",
+   "filter": "('tenant', 't2')",
+   "selectivity": 0.11871387650638146,
+   "n_queries": 300,
+   "recall10": 0.4856666666666665,
+   "recall_runs": [
+    0.4856666666666665,
+    0.4856666666666665,
+    0.4856666666666665
+   ],
+   "shortfall_rate": 0.99,
+   "mean_returned": 4.86,
+   "p50_ms": 3.286347499852127,
+   "p95_ms": 67.04217029928259,
+   "reps": 3,
+   "backend": "pgvector",
+   "arm": "trap_defaults"
+  },
+  {
+   "cell": "trap_tenant_t5",
+   "filter": "('tenant', 't5')",
+   "selectivity": 0.010508652689028628,
+   "n_queries": 300,
+   "recall10": 1.0,
+   "recall_runs": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 2.4443945003440604,
+   "p95_ms": 56.990189500493216,
+   "reps": 3,
+   "backend": "pgvector",
+   "arm": "trap_defaults"
+  }
+ ],
+ "hybrid": {
+  "pgvector": {
+   "n_questions_sampled": 250,
+   "n_questions_scored": 250,
+   "arms": {
+    "dense": {
+     "ndcg10": 0.3753306306762701,
+     "recall100": 0.555963492063492
+    },
+    "bm25_shared": {
+     "ndcg10": 0.42654359241523365,
+     "recall100": 0.49467460317460316
+    },
+    "hybrid": {
+     "ndcg10": 0.39228198249996565,
+     "recall100": 0.5574301587301588
+    }
+   },
+   "fusion": "SQL RRF over vector ranking and ts_rank ranking"
+  }
+ },
+ "tuning": {
+  "pgvector": {
+   "ladder": [
+    {
+     "breadth": 40,
+     "recall10": 0.9780000000000001
+    }
+   ],
+   "chosen": 40
+  }
+ },
+ "blocked": []
+}

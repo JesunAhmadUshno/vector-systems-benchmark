@@ -349,7 +349,7 @@ def apply_churn_to_study(study: Study, delete_ids, inserts) -> None:
 # Per-backend runs
 # --------------------------------------------------------------------------
 
-def run_faiss(bundle, study: Study, results: dict) -> None:
+def run_faiss(bundle, study: Study, results: dict, ckpt=None) -> None:
     from .adapters.faiss_adapter import FaissAdapter
 
     ad = FaissAdapter(dim=study.dim)
@@ -379,14 +379,19 @@ def run_faiss(bundle, study: Study, results: dict) -> None:
     ad.close()
 
 
-def run_qdrant(bundle, study: Study, results: dict, qdrant_dir: Path) -> None:
+def run_qdrant(bundle, study: Study, results: dict, qdrant_dir, ckpt=None) -> None:
     from .adapters.qdrant_adapter import QdrantAdapter
 
-    ad = QdrantAdapter(path=str(qdrant_dir), dim=study.dim, bm25=bundle["bm25"])
+    ad = QdrantAdapter(
+        path=None if qdrant_dir is None else str(qdrant_dir),
+        dim=study.dim, bm25=bundle["bm25"],
+    )
     ids = [c["id"] for c in study.chunks]
     ad.build(ids, study.vec_by_id[ids], payloads_for(study.chunks))
     results["tuning"]["qdrant"] = tune_breadth(ad, study)
     run_main_cells(ad, study, results, "qdrant", "main")
+    if ckpt:
+        ckpt()
     bm25: BM25 = bundle["bm25"]
 
     def native_hybrid(qvec, qtext, depth):
@@ -410,6 +415,8 @@ def run_qdrant(bundle, study: Study, results: dict, qdrant_dir: Path) -> None:
         h["fusion"] = f"client-side RRF (native fusion failed: {type(exc).__name__}: {exc})"
         h["native_hybrid_ok"] = False
     results["hybrid"]["qdrant"] = h
+    if ckpt:
+        ckpt()
     pre = {c["cell"]: c for c in results["cells"] if c["backend"] == "qdrant"}
     delete_ids, inserts, insert_ids = churn_setup(study)
     ad.delete(delete_ids)
@@ -423,10 +430,12 @@ def run_qdrant(bundle, study: Study, results: dict, qdrant_dir: Path) -> None:
         cell["stale_rate"] = stale_rate(cell["_returned"], delete_ids)
         cell["pre_churn_recall10"] = pre[cell_name]["recall10"]
         results["churn"].append(public_cell(cell))
+        if ckpt:
+            ckpt()
     ad.close()
 
 
-def run_pgvector(bundle, study: Study, results: dict, conninfo: str) -> None:
+def run_pgvector(bundle, study: Study, results: dict, conninfo: str, ckpt=None) -> None:
     from .adapters.pgvector_adapter import PgvectorAdapter
 
     ad = PgvectorAdapter(conninfo=conninfo, dim=study.dim)
@@ -484,6 +493,15 @@ def cpu_model() -> str:
     return platform.processor() or "unknown"
 
 
+def _pkg_version(dist: str) -> str:
+    try:
+        from importlib.metadata import version
+
+        return version(dist)
+    except Exception:
+        return "unknown"
+
+
 def env_record(bundle: dict, study: Study) -> dict:
     import faiss
     import qdrant_client
@@ -495,7 +513,7 @@ def env_record(bundle: dict, study: Study) -> dict:
         "cpu": cpu_model(),
         "numpy": np.__version__,
         "faiss": getattr(faiss, "__version__", "unknown"),
-        "qdrant_client": getattr(qdrant_client, "__version__", "unknown"),
+        "qdrant_client": _pkg_version("qdrant-client"),
         "embedding_model": MODEL_NAME,
         "embedding_model_licence": MODEL_LICENCE,
         "corpus": "SQuAD v1.1 train paragraphs, chunked",
@@ -562,13 +580,21 @@ def main() -> int:
     env = env_record(bundle, study0)
     backends = [b.strip() for b in args.backends.split(",") if b.strip()]
 
+    def checkpoint() -> None:
+        # Flush after every phase, not only at the end (DECISIONS.md D9):
+        # a VM reboot during the first Qdrant run destroyed an hour of
+        # measured cells because results were written per backend only.
+        (results_dir / "cells.json").write_text(json.dumps(results, indent=1))
+
     def dispatch(name: str, study: Study) -> None:
         if name == "faiss":
-            run_faiss(bundle, study, results)
+            run_faiss(bundle, study, results, ckpt=checkpoint)
         elif name == "qdrant":
-            run_qdrant(bundle, study, results, work_dir / "qdrant")
+            # In-memory local mode (DECISIONS.md D8): the on-disk SQLite
+            # variant ingested about 1,000 points per minute on this VM.
+            run_qdrant(bundle, study, results, None, ckpt=checkpoint)
         elif name == "pgvector":
-            run_pgvector(bundle, study, results, args.pg_conninfo)
+            run_pgvector(bundle, study, results, args.pg_conninfo, ckpt=checkpoint)
         else:
             raise ValueError(f"unknown backend {name}")
 
@@ -584,7 +610,7 @@ def main() -> int:
                 {"backend": name, "error": f"{type(exc).__name__}: {exc}"}
             )
             print(f"backend BLOCKED: {name}: {exc}", flush=True)
-        (results_dir / "cells.json").write_text(json.dumps(results, indent=1))
+        checkpoint()
 
     try:
         import psycopg
