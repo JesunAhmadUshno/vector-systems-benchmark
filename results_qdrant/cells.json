@@ -1,0 +1,171 @@
+{
+ "cells": [
+  {
+   "cell": "none",
+   "filter": "None",
+   "selectivity": 1.0,
+   "n_queries": 100,
+   "recall10": 1.0,
+   "recall_runs": [
+    1.0,
+    1.0
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 137.13021700004902,
+   "p95_ms": 299.5348817999001,
+   "reps": 2,
+   "backend": "qdrant",
+   "arm": "main"
+  },
+  {
+   "cell": "tenant_t0",
+   "filter": "('tenant', 't0')",
+   "selectivity": 0.490838827776742,
+   "n_queries": 100,
+   "recall10": 1.0,
+   "recall_runs": [
+    1.0,
+    1.0
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 925.276957999813,
+   "p95_ms": 1522.2023065500023,
+   "reps": 2,
+   "backend": "qdrant",
+   "arm": "main"
+  },
+  {
+   "cell": "tenant_t2",
+   "filter": "('tenant', 't2')",
+   "selectivity": 0.11871387650638146,
+   "n_queries": 100,
+   "recall10": 1.0,
+   "recall_runs": [
+    1.0,
+    1.0
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 984.8274659998424,
+   "p95_ms": 2005.4416913999826,
+   "reps": 2,
+   "backend": "qdrant",
+   "arm": "main"
+  },
+  {
+   "cell": "tenant_t5",
+   "filter": "('tenant', 't5')",
+   "selectivity": 0.010508652689028628,
+   "n_queries": 100,
+   "recall10": 1.0,
+   "recall_runs": [
+    1.0,
+    1.0
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 1785.4074609995223,
+   "p95_ms": 3690.6318733498665,
+   "reps": 2,
+   "backend": "qdrant",
+   "arm": "main"
+  },
+  {
+   "cell": "article_group",
+   "filter": "('article_in', ['New_York_City', 'Middle_Ages'])",
+   "selectivity": 0.012610383226834353,
+   "n_queries": 100,
+   "recall10": 1.0,
+   "recall_runs": [
+    1.0,
+    1.0
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 1175.4445560000022,
+   "p95_ms": 2142.3811166491305,
+   "reps": 2,
+   "backend": "qdrant",
+   "arm": "main"
+  }
+ ],
+ "churn": [
+  {
+   "cell": "post_churn_none",
+   "filter": "None",
+   "selectivity": 1.0,
+   "n_queries": 100,
+   "recall10": 1.0,
+   "recall_runs": [
+    1.0,
+    1.0
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 130.97822449935848,
+   "p95_ms": 298.5377513000457,
+   "reps": 2,
+   "backend": "qdrant",
+   "arm": "native",
+   "stale_rate": 0.0,
+   "pre_churn_recall10": 1.0
+  },
+  {
+   "cell": "post_churn_tenant_t5",
+   "filter": "('tenant', 't5')",
+   "selectivity": 0.010508652689028628,
+   "n_queries": 100,
+   "recall10": 1.0,
+   "recall_runs": [
+    1.0,
+    1.0
+   ],
+   "shortfall_rate": 0.0,
+   "mean_returned": 10.0,
+   "p50_ms": 976.7671295003311,
+   "p95_ms": 1509.1157245492013,
+   "reps": 2,
+   "backend": "qdrant",
+   "arm": "native",
+   "stale_rate": 0.0,
+   "pre_churn_recall10": 1.0
+  }
+ ],
+ "trap": [],
+ "hybrid": {
+  "qdrant": {
+   "n_questions_sampled": 250,
+   "n_questions_scored": 250,
+   "arms": {
+    "dense": {
+     "ndcg10": 0.38651759158505056,
+     "recall100": 0.5567634920634921
+    },
+    "bm25_shared": {
+     "ndcg10": 0.42654359241523365,
+     "recall100": 0.49467460317460316
+    },
+    "hybrid": {
+     "ndcg10": 0.4558904488739573,
+     "recall100": 0.5947587301587302
+    }
+   },
+   "fusion": "native Query API RRF",
+   "native_hybrid_ok": true
+  }
+ },
+ "tuning": {
+  "qdrant": {
+   "ladder": [
+    {
+     "breadth": 40,
+     "recall10": 1.0
+    }
+   ],
+   "chosen": 40
+  }
+ },
+ "blocked": []
+}

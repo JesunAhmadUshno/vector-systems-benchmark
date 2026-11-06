@@ -21,11 +21,38 @@ Hypotheses were pre-registered before any experiment code was written
 
 ## Verdict
 
-VERDICT_PLACEHOLDER
+No universal winner, and the map has sharp edges. Unfiltered, FAISS is
+the fastest by a wide margin (p95 0.47 ms at recall 0.967, against
+3.05 ms for pgvector and 299.53 ms for embedded Qdrant). Under a tight
+filter at about 1 percent selectivity, FAISS recall falls to 0.413 with
+a shortfall rate of 0.267: post-filtering an HNSW candidate set starves
+as selectivity drops. pgvector with iterative scan holds recall 1.000
+in the same cell. Its documented overfiltering trap turns out to live
+one selectivity band higher than the literature suggests: at shipped
+defaults and about 12 percent selectivity it returns a mean of 4.86
+results per query with a shortfall rate of 0.990, while at 1 percent
+no trap appears: the measured mean returned there is 10.00 where the
+candidate-starvation model predicts about 0.1, the pattern the
+research pack's row 10 attributes to the planner leaving the ANN index
+at very low selectivity (H1 is refuted as pre-registered, and the
+trap's measured location is the finding). Qdrant in embedded local
+mode is exact by construction, recall 1.000 in every cell, and its
+latency (up to 3.69 s p95 in the tight cell) measures a Python
+brute-force scan, not the server product; the server's filtered HNSW
+stays unmeasured here (ROADMAP item 1). Under a 10 percent churn cycle,
+FAISS without external bookkeeping keeps serving deleted vectors at a
+stale rate of 0.113; with bookkeeping, and in pgvector and Qdrant, the
+stale rate is 0.000. Hybrid fusion pays where the lexical arm is the
+shared BM25 encoder (FAISS +0.047 nDCG@10; Qdrant native RRF +0.069)
+and barely where it is PostgreSQL full-text search (+0.017).
 
 ## Headline results
 
-RESULTS_TABLE_PLACEHOLDER
+| Backend | Unfiltered recall@10 | Unfiltered p95 ms | Tight filter recall@10 | Tight shortfall | Post-churn recall drop | Hybrid nDCG@10 (dense to hybrid) |
+|---|---|---|---|---|---|---|
+| faiss | 0.967 | 0.47 | 0.413 | 0.267 | 0.009 | 0.374 to 0.421 |
+| pgvector | 0.978 | 3.05 | 1.000 | 0.000 | 0.002 | 0.375 to 0.392 |
+| qdrant | 1.000 | 299.53 | 1.000 | 0.000 | 0.000 | 0.387 to 0.456 |
 
 Full generated results, including the trap cell, the churn cells, the
 tuning ladders, and the per-hypothesis evidence: RESULTS.md.
@@ -46,9 +73,10 @@ interface (build, search with a filter spec, delete, insert):
 - bm25.py is the shared sparse encoder for every hybrid arm, so hybrid
   differences cannot come from the encoder. Fusion is RRF, k = 60.
 - adapters/ holds the FAISS (IndexHNSWFlat with IDSelector filtering),
-  Qdrant (embedded local mode, payload index before ingestion, native
-  Query API hybrid), and pgvector (HNSW, SQL filters, iterative scan
-  arms, SQL hybrid) implementations.
+  Qdrant (embedded local mode, in-memory variant per DECISIONS.md D8,
+  native Query API hybrid; payload index calls are kept for server
+  parity and have no effect in local mode), and pgvector (HNSW, SQL
+  filters, iterative scan arms, SQL hybrid) implementations.
 - run_benchmark.py runs the cells and writes results/*.json.
   generate_results.py renders RESULTS.md and the table above from those
   files. No number is typed by hand.
@@ -75,7 +103,13 @@ never edited.
   clusters, GPUs, or billion-scale data.
 - Qdrant runs in embedded local mode, a Python implementation, not the
   production server. Its latency is not the server's latency, and its
-  filtered recall is a floor. A server-mode rerun is ROADMAP item 1.
+  filtered recall is exact by construction, so it cannot evidence the
+  server product's filtered recall at all. A server-mode rerun is
+  ROADMAP item 1.
+- Qdrant ran at 100 queries and 2 repetitions against 300 and 3 for
+  the other backends (DECISIONS.md D10): local mode costs about a
+  second per query at this scale. Its latency percentiles rest on the
+  smaller sample.
 - FAISS runs in process while the others run through clients, so latency
   compares deployed shapes, not only index algorithms.
 - One corpus, one embedding model, one chunk size, one churn rate (10

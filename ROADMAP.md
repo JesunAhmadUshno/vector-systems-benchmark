@@ -7,7 +7,8 @@ one strengthens or threatens the published verdicts.
 
 1. Qdrant server mode. Rerun the Qdrant cells against the production
    server binary on localhost. This retires the largest named
-   limitation: local mode latency and its floor on filtered recall.
+   limitation: local mode latency, and local mode recall being exact
+   by construction instead of measured against the server's HNSW.
 2. Matched-recall Pareto curves. Sweep breadth per backend and report
    recall, p95 and p99 at recall 0.90, 0.95 and 0.99 (the pack's
    calculation C4), with 5 runs per setting and 95 percent intervals on
