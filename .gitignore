@@ -5,3 +5,6 @@ __pycache__/
 data/
 work/
 .venv/
+site/node_modules/
+site/dist/
+site/.rubric/
