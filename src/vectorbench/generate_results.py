@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 
 CELL_LABELS = {
@@ -31,6 +32,51 @@ def f3(x):
 
 def f2(x):
     return "n/a" if x is None else f"{x:.2f}"
+
+
+def wilson(p: float, n: int, z: float = 1.959964) -> tuple[float, float]:
+    """Wilson score 95 percent interval for a proportion p observed over n trials."""
+    if n <= 0:
+        return (0.0, 1.0)
+    den = 1 + z * z / n
+    centre = (p + z * z / (2 * n)) / den
+    half = (z / den) * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))
+    return (max(0.0, centre - half), min(1.0, centre + half))
+
+
+def ci3(lo_hi) -> str:
+    return f"{lo_hi[0]:.3f} to {lo_hi[1]:.3f}"
+
+
+def shortfall_ci(e) -> tuple[float, float]:
+    # Shortfall is a per-query yes/no outcome, so n is the number of queries.
+    return wilson(e["shortfall_rate"], e["n_queries"])
+
+
+def stale_slots(e) -> int:
+    return round(e["n_queries"] * e["mean_returned"])
+
+
+def stale_ci(e) -> tuple[float, float]:
+    # Stale rate is a share of returned slots. Slots within one query are not
+    # independent, so this slot-level interval is narrower than a query-level one.
+    return wilson(e["stale_rate"], stale_slots(e))
+
+
+def c2_check(results) -> dict:
+    """C2 candidate-starvation model: mean returned is about ef_search x selectivity
+    (default ef_search 40) while the ANN index plan is used. Agreement means the
+    measured mean returned is within 10 percent of the prediction capped at k."""
+    out = {}
+    for name in ("trap_tenant_t2", "trap_tenant_t5"):
+        e = find(results["trap"], "pgvector", name)
+        if e is None:
+            continue
+        predicted = 40 * (e["selectivity"] or 0)
+        capped = min(10.0, predicted)
+        agrees = abs(e["mean_returned"] - capped) <= 0.10 * max(capped, 1e-9)
+        out[name] = {"predicted": predicted, "measured": e["mean_returned"], "agrees": agrees}
+    return out
 
 
 def find(entries, backend, cell, arm=None):
@@ -108,7 +154,8 @@ def verdicts(results) -> list[dict]:
         out.append({"id": "H2", "verdict": "Inconclusive",
                     "evidence": "Fewer than two backends have measured main cells."})
     else:
-        ev = (f"Cells compared: {total_cells}. Cell leads (recall or p95): "
+        ev = (f"Cells compared: {total_cells} (the five main filter cells; the post-churn "
+              f"cells listed in the pre-registered H2 are not included, see DECISIONS.md D11). Cell leads (recall or p95): "
               + ", ".join(f"{b} {leads[b]}" for b in backends)
               + ". Cells swept on both metrics: "
               + ", ".join(f"{b} {sweep[b]}" for b in backends) + ".")
@@ -219,13 +266,14 @@ def cell_table(results, cell_names, entries_key="cells") -> str:
     for name in cell_names:
         lines.append(f"### {CELL_LABELS.get(name, name)}")
         lines.append("")
-        lines.append("| Backend | Arm | Selectivity | recall@10 | Shortfall rate | Mean returned | p50 ms | p95 ms |")
-        lines.append("|---|---|---|---|---|---|---|---|")
+        lines.append("| Backend | Arm | Selectivity | Queries x reps | recall@10 | Shortfall rate | Shortfall 95% CI | Mean returned | p50 ms | p95 ms |")
+        lines.append("|---|---|---|---|---|---|---|---|---|---|")
         for b in BACKEND_ORDER:
             for e in [x for x in entries if x["cell"] == name and x["backend"] == b]:
                 lines.append(
-                    f"| {b} | {e.get('arm', '')} | {f3(e['selectivity'])} | {f3(e['recall10'])} | "
-                    f"{f3(e['shortfall_rate'])} | {f2(e['mean_returned'])} | {f2(e['p50_ms'])} | {f2(e['p95_ms'])} |"
+                    f"| {b} | {e.get('arm', '')} | {f3(e['selectivity'])} | {e['n_queries']} x {e['reps']} | "
+                    f"{f3(e['recall10'])} | {f3(e['shortfall_rate'])} | {ci3(shortfall_ci(e))} | "
+                    f"{f2(e['mean_returned'])} | {f2(e['p50_ms'])} | {f2(e['p95_ms'])} |"
                 )
         lines.append("")
     return "\n".join(lines)
@@ -247,6 +295,16 @@ def build(results: dict, env: dict) -> tuple[str, str]:
                 "corpus_licence", "n_chunks", "n_heldout_chunks", "dim", "n_queries", "reps", "k"]:
         if key in env:
             lines.append(f"| {key} | {env[key]} |")
+    lines.append("")
+    if "qdrant_protocol_note" in env:
+        lines.append(f"Sample size per backend: {env['qdrant_protocol_note']}. The n_queries and reps "
+                     f"rows above are the FAISS and pgvector protocol; every results table below "
+                     f"gives queries x reps per row.")
+        lines.append("")
+    lines.append("Shortfall 95% CI is a Wilson score interval over queries (shortfall is a per-query "
+                 "yes/no outcome). Stale 95% CI is a Wilson interval over returned slots; slots within "
+                 "a query are not independent, so it is narrower than a query-level interval would be. "
+                 "Recall, nDCG and latency carry no interval: per-query values were not saved.")
     lines.append("")
     lines.append("Measured filter selectivities: "
                  + ", ".join(f"{k} {f3(v)}" for k, v in env.get("filter_selectivity_measured", {}).items())
@@ -277,8 +335,9 @@ def build(results: dict, env: dict) -> tuple[str, str]:
     t5_trap = find(results["trap"], "pgvector", "trap_tenant_t5")
     t2_trap = find(results["trap"], "pgvector", "trap_tenant_t2")
     if t5_trap is not None and t2_trap is not None:
-        pred_t5 = 40 * (t5_trap["selectivity"] or 0)
-        pred_t2 = 40 * (t2_trap["selectivity"] or 0)
+        c2 = c2_check(results)
+        pred_t5 = c2["trap_tenant_t5"]["predicted"]
+        pred_t2 = c2["trap_tenant_t2"]["predicted"]
         lines.append(f"C2 check: the research pack's model says mean returned is about ef_search times "
                      f"selectivity, as long as the ANN index plan is used. At about 10 percent selectivity "
                      f"the prediction is {f2(pred_t2)} and the measured mean returned is "
@@ -290,13 +349,14 @@ def build(results: dict, env: dict) -> tuple[str, str]:
     lines.append("## Churn: after deleting 10 percent and inserting 10 percent")
     lines.append("")
     churn = results["churn"]
-    lines.append("| Backend | Arm | Cell | recall@10 | Pre-churn recall@10 | Stale rate | p50 ms | p95 ms |")
-    lines.append("|---|---|---|---|---|---|---|---|")
+    lines.append("| Backend | Arm | Cell | Queries x reps | recall@10 | Pre-churn recall@10 | Stale rate | Stale 95% CI (slots) | p50 ms | p95 ms |")
+    lines.append("|---|---|---|---|---|---|---|---|---|---|")
     for b in BACKEND_ORDER:
         for e in [x for x in churn if x["backend"] == b]:
             lines.append(
-                f"| {b} | {e.get('arm', '')} | {CELL_LABELS.get(e['cell'], e['cell'])} | {f3(e['recall10'])} | "
-                f"{f3(e.get('pre_churn_recall10'))} | {f3(e.get('stale_rate'))} | {f2(e['p50_ms'])} | {f2(e['p95_ms'])} |"
+                f"| {b} | {e.get('arm', '')} | {CELL_LABELS.get(e['cell'], e['cell'])} | {e['n_queries']} x {e['reps']} | "
+                f"{f3(e['recall10'])} | {f3(e.get('pre_churn_recall10'))} | {f3(e.get('stale_rate'))} | "
+                f"{ci3(stale_ci(e))} ({stale_slots(e)}) | {f2(e['p50_ms'])} | {f2(e['p95_ms'])} |"
             )
     lines.append("")
     lines.append("## Hybrid search quality")

@@ -27,6 +27,10 @@ this directory. No number in this file was typed by hand.
 | reps | 3 |
 | k | 10 |
 
+Sample size per backend: Qdrant ran at 100 queries x 2 reps (DECISIONS.md D10); FAISS and pgvector ran at 300 queries x 3 reps. The n_queries and reps rows above are the FAISS and pgvector protocol; every results table below gives queries x reps per row.
+
+Shortfall 95% CI is a Wilson score interval over queries (shortfall is a per-query yes/no outcome). Stale 95% CI is a Wilson interval over returned slots; slots within a query are not independent, so it is narrower than a query-level interval would be. Recall, nDCG and latency carry no interval: per-query values were not saved.
+
 Measured filter selectivities: none 1.000, tenant_t0 0.491, tenant_t2 0.119, tenant_t5 0.011, article_group 0.013.
 
 ## Tuning
@@ -44,43 +48,43 @@ recall@10 at or above 0.95 was frozen for all cells of that backend.
 
 ### Unfiltered
 
-| Backend | Arm | Selectivity | recall@10 | Shortfall rate | Mean returned | p50 ms | p95 ms |
-|---|---|---|---|---|---|---|---|
-| faiss | main | 1.000 | 0.967 | 0.000 | 10.00 | 0.17 | 0.47 |
-| pgvector | iterative | 1.000 | 0.978 | 0.000 | 10.00 | 1.55 | 3.05 |
-| qdrant | main | 1.000 | 1.000 | 0.000 | 10.00 | 137.13 | 299.53 |
+| Backend | Arm | Selectivity | Queries x reps | recall@10 | Shortfall rate | Shortfall 95% CI | Mean returned | p50 ms | p95 ms |
+|---|---|---|---|---|---|---|---|---|---|
+| faiss | main | 1.000 | 300 x 3 | 0.967 | 0.000 | 0.000 to 0.013 | 10.00 | 0.17 | 0.47 |
+| pgvector | iterative | 1.000 | 300 x 3 | 0.978 | 0.000 | 0.000 to 0.013 | 10.00 | 1.55 | 3.05 |
+| qdrant | main | 1.000 | 100 x 2 | 1.000 | 0.000 | 0.000 to 0.037 | 10.00 | 137.13 | 299.53 |
 
 ### Filter, random label, about 50 percent selectivity
 
-| Backend | Arm | Selectivity | recall@10 | Shortfall rate | Mean returned | p50 ms | p95 ms |
-|---|---|---|---|---|---|---|---|
-| faiss | main | 0.491 | 0.952 | 0.000 | 10.00 | 9.94 | 68.83 |
-| pgvector | iterative | 0.491 | 1.000 | 0.000 | 10.00 | 2.37 | 99.94 |
-| qdrant | main | 0.491 | 1.000 | 0.000 | 10.00 | 925.28 | 1522.20 |
+| Backend | Arm | Selectivity | Queries x reps | recall@10 | Shortfall rate | Shortfall 95% CI | Mean returned | p50 ms | p95 ms |
+|---|---|---|---|---|---|---|---|---|---|
+| faiss | main | 0.491 | 300 x 3 | 0.952 | 0.000 | 0.000 to 0.013 | 10.00 | 9.94 | 68.83 |
+| pgvector | iterative | 0.491 | 300 x 3 | 1.000 | 0.000 | 0.000 to 0.013 | 10.00 | 2.37 | 99.94 |
+| qdrant | main | 0.491 | 100 x 2 | 1.000 | 0.000 | 0.000 to 0.037 | 10.00 | 925.28 | 1522.20 |
 
 ### Filter, random label, about 10 percent selectivity
 
-| Backend | Arm | Selectivity | recall@10 | Shortfall rate | Mean returned | p50 ms | p95 ms |
-|---|---|---|---|---|---|---|---|
-| faiss | main | 0.119 | 0.868 | 0.000 | 10.00 | 4.75 | 44.31 |
-| pgvector | iterative | 0.119 | 0.979 | 0.000 | 10.00 | 4.01 | 48.54 |
-| qdrant | main | 0.119 | 1.000 | 0.000 | 10.00 | 984.83 | 2005.44 |
+| Backend | Arm | Selectivity | Queries x reps | recall@10 | Shortfall rate | Shortfall 95% CI | Mean returned | p50 ms | p95 ms |
+|---|---|---|---|---|---|---|---|---|---|
+| faiss | main | 0.119 | 300 x 3 | 0.868 | 0.000 | 0.000 to 0.013 | 10.00 | 4.75 | 44.31 |
+| pgvector | iterative | 0.119 | 300 x 3 | 0.979 | 0.000 | 0.000 to 0.013 | 10.00 | 4.01 | 48.54 |
+| qdrant | main | 0.119 | 100 x 2 | 1.000 | 0.000 | 0.000 to 0.037 | 10.00 | 984.83 | 2005.44 |
 
 ### Filter, random label, about 1 percent selectivity (tight)
 
-| Backend | Arm | Selectivity | recall@10 | Shortfall rate | Mean returned | p50 ms | p95 ms |
-|---|---|---|---|---|---|---|---|
-| faiss | main | 0.011 | 0.413 | 0.267 | 9.27 | 4.44 | 68.70 |
-| pgvector | iterative | 0.011 | 1.000 | 0.000 | 10.00 | 0.90 | 5.68 |
-| qdrant | main | 0.011 | 1.000 | 0.000 | 10.00 | 1785.41 | 3690.63 |
+| Backend | Arm | Selectivity | Queries x reps | recall@10 | Shortfall rate | Shortfall 95% CI | Mean returned | p50 ms | p95 ms |
+|---|---|---|---|---|---|---|---|---|---|
+| faiss | main | 0.011 | 300 x 3 | 0.413 | 0.267 | 0.220 to 0.319 | 9.27 | 4.44 | 68.70 |
+| pgvector | iterative | 0.011 | 300 x 3 | 1.000 | 0.000 | 0.000 to 0.013 | 10.00 | 0.90 | 5.68 |
+| qdrant | main | 0.011 | 100 x 2 | 1.000 | 0.000 | 0.000 to 0.037 | 10.00 | 1785.41 | 3690.63 |
 
 ### Filter, correlated label, about 1 percent selectivity
 
-| Backend | Arm | Selectivity | recall@10 | Shortfall rate | Mean returned | p50 ms | p95 ms |
-|---|---|---|---|---|---|---|---|
-| faiss | main | 0.013 | 0.356 | 0.440 | 7.72 | 3.66 | 65.39 |
-| pgvector | iterative | 0.013 | 0.988 | 0.000 | 10.00 | 68.75 | 179.84 |
-| qdrant | main | 0.013 | 1.000 | 0.000 | 10.00 | 1175.44 | 2142.38 |
+| Backend | Arm | Selectivity | Queries x reps | recall@10 | Shortfall rate | Shortfall 95% CI | Mean returned | p50 ms | p95 ms |
+|---|---|---|---|---|---|---|---|---|---|
+| faiss | main | 0.013 | 300 x 3 | 0.356 | 0.440 | 0.385 to 0.497 | 7.72 | 3.66 | 65.39 |
+| pgvector | iterative | 0.013 | 300 x 3 | 0.988 | 0.000 | 0.000 to 0.013 | 10.00 | 68.75 | 179.84 |
+| qdrant | main | 0.013 | 100 x 2 | 1.000 | 0.000 | 0.000 to 0.037 | 10.00 | 1175.44 | 2142.38 |
 
 ## The pgvector trap cell (defaults)
 
@@ -89,30 +93,30 @@ deployment runs. The main pgvector cells above run iterative scan on.
 
 ### Trap cell, about 10 percent selectivity, defaults
 
-| Backend | Arm | Selectivity | recall@10 | Shortfall rate | Mean returned | p50 ms | p95 ms |
-|---|---|---|---|---|---|---|---|
-| pgvector | trap_defaults | 0.119 | 0.486 | 0.990 | 4.86 | 3.29 | 67.04 |
+| Backend | Arm | Selectivity | Queries x reps | recall@10 | Shortfall rate | Shortfall 95% CI | Mean returned | p50 ms | p95 ms |
+|---|---|---|---|---|---|---|---|---|---|
+| pgvector | trap_defaults | 0.119 | 300 x 3 | 0.486 | 0.990 | 0.971 to 0.997 | 4.86 | 3.29 | 67.04 |
 
 ### Trap cell, about 1 percent selectivity, defaults
 
-| Backend | Arm | Selectivity | recall@10 | Shortfall rate | Mean returned | p50 ms | p95 ms |
-|---|---|---|---|---|---|---|---|
-| pgvector | trap_defaults | 0.011 | 1.000 | 0.000 | 10.00 | 2.44 | 56.99 |
+| Backend | Arm | Selectivity | Queries x reps | recall@10 | Shortfall rate | Shortfall 95% CI | Mean returned | p50 ms | p95 ms |
+|---|---|---|---|---|---|---|---|---|---|
+| pgvector | trap_defaults | 0.011 | 300 x 3 | 1.000 | 0.000 | 0.000 to 0.013 | 10.00 | 2.44 | 56.99 |
 
 C2 check: the research pack's model says mean returned is about ef_search times selectivity, as long as the ANN index plan is used. At about 10 percent selectivity the prediction is 4.75 and the measured mean returned is 4.86: agreement. At about 1 percent the prediction is 0.42 and the measured mean returned is 10.00: disagreement, explained by the planner leaving the ANN index at very low selectivity (research pack row 10), so the model's condition does not hold there.
 
 ## Churn: after deleting 10 percent and inserting 10 percent
 
-| Backend | Arm | Cell | recall@10 | Pre-churn recall@10 | Stale rate | p50 ms | p95 ms |
-|---|---|---|---|---|---|---|---|
-| faiss | raw | Post-churn, unfiltered | 0.866 | 0.967 | 0.113 | 0.16 | 0.30 |
-| faiss | raw | Post-churn, tight filter | 0.391 | 0.413 | 0.103 | 3.76 | 5.32 |
-| faiss | bookkeeping | Post-churn, unfiltered | 0.958 | 0.967 | 0.000 | 12.60 | 23.92 |
-| faiss | bookkeeping | Post-churn, tight filter | 0.391 | 0.413 | 0.000 | 5.26 | 9.74 |
-| pgvector | iterative | Post-churn, unfiltered | 0.976 | 0.978 | 0.000 | 1.91 | 3.99 |
-| pgvector | iterative | Post-churn, tight filter | 1.000 | 1.000 | 0.000 | 1.40 | 8.45 |
-| qdrant | native | Post-churn, unfiltered | 1.000 | 1.000 | 0.000 | 130.98 | 298.54 |
-| qdrant | native | Post-churn, tight filter | 1.000 | 1.000 | 0.000 | 976.77 | 1509.12 |
+| Backend | Arm | Cell | Queries x reps | recall@10 | Pre-churn recall@10 | Stale rate | Stale 95% CI (slots) | p50 ms | p95 ms |
+|---|---|---|---|---|---|---|---|---|---|
+| faiss | raw | Post-churn, unfiltered | 300 x 3 | 0.866 | 0.967 | 0.113 | 0.102 to 0.125 (3000) | 0.16 | 0.30 |
+| faiss | raw | Post-churn, tight filter | 300 x 3 | 0.391 | 0.413 | 0.103 | 0.092 to 0.115 (2774) | 3.76 | 5.32 |
+| faiss | bookkeeping | Post-churn, unfiltered | 300 x 3 | 0.958 | 0.967 | 0.000 | 0.000 to 0.001 (3000) | 12.60 | 23.92 |
+| faiss | bookkeeping | Post-churn, tight filter | 300 x 3 | 0.391 | 0.413 | 0.000 | 0.000 to 0.001 (2646) | 5.26 | 9.74 |
+| pgvector | iterative | Post-churn, unfiltered | 300 x 3 | 0.976 | 0.978 | 0.000 | 0.000 to 0.001 (3000) | 1.91 | 3.99 |
+| pgvector | iterative | Post-churn, tight filter | 300 x 3 | 1.000 | 1.000 | 0.000 | 0.000 to 0.001 (3000) | 1.40 | 8.45 |
+| qdrant | native | Post-churn, unfiltered | 100 x 2 | 1.000 | 1.000 | 0.000 | 0.000 to 0.004 (1000) | 130.98 | 298.54 |
+| qdrant | native | Post-churn, tight filter | 100 x 2 | 1.000 | 1.000 | 0.000 | 0.000 to 0.004 (1000) | 976.77 | 1509.12 |
 
 ## Hybrid search quality
 
@@ -127,7 +131,7 @@ C2 check: the research pack's model says mean returned is about ef_search times 
 | Hypothesis | Verdict | Evidence |
 |---|---|---|
 | H1 | Refuted | Tight cell at defaults: recall 1.000, shortfall 0.000, mean returned 10.00. Tight cell with iterative scan on: recall 1.000, shortfall 0.000. One band up, at about 10 percent selectivity, the trap does appear at defaults: recall 0.486, shortfall 0.990, mean returned 4.86. The pattern matches the research pack's row 10: at very low selectivity the planner can leave the ANN index and answer exactly over the filtered subset, which rescues the tight cell. H1 is therefore judged on its pre-registered tight-cell wording. |
-| H2 | Supported | Cells compared: 5. Cell leads (recall or p95): faiss 4, pgvector 2, qdrant 5. Cells swept on both metrics: faiss 0, pgvector 1, qdrant 0. |
+| H2 | Supported | Cells compared: 5 (the five main filter cells; the post-churn cells listed in the pre-registered H2 are not included, see DECISIONS.md D11). Cell leads (recall or p95): faiss 4, pgvector 2, qdrant 5. Cells swept on both metrics: faiss 0, pgvector 1, qdrant 0. |
 | H3 | Supported | Qdrant tight cell: recall 1.000, shortfall 0.000 at frozen breadth. Caveat: measured in embedded local mode, which the client itself warns performs exact brute-force search; this supports the hypothesis for the embedded engine only. The server product's filtered HNSW is not measured here and stays Not yet measured (ROADMAP item 1). |
 | H4 | Supported | FAISS p95 0.47 ms at recall 0.967. pgvector p95 3.05 ms at recall 0.978; qdrant p95 299.53 ms at recall 1.000 |
 | H5 | Supported | pgvector stale rate 0: pass (pgvector stale 0.000); qdrant stale rate 0: pass (qdrant stale 0.000); faiss raw stale rate above 0: pass (faiss raw stale 0.113); faiss bookkeeping stale rate 0: pass (faiss bookkeeping stale 0.000); recall drop below 0.05 for every backend: pass (pgvector drop 0.002, qdrant drop 0.000, faiss drop 0.009). |

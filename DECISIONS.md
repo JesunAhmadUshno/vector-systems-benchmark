@@ -129,3 +129,17 @@ queries per cell instead of 300, so their tails are less stable; the
 hybrid cell is unchanged (it uses its own fixed set of 250 questions
 for every backend). No Qdrant number from the abandoned full-protocol
 attempts is used anywhere.
+
+## D11: H2 cell set disclosed, post-churn cells left out (recorded after the results)
+
+HYPOTHESES.md H2 lists the post-churn cell among the cells compared, but
+generate_results.py has always computed H2 over the five main filter
+cells only. The post-churn records run different arms per backend
+(FAISS raw and bookkeeping, pgvector iterative, Qdrant native), so they
+are not a like-for-like main cell. Verdict: keep the computation on the
+five main cells, and say so in the H2 evidence line, which now names the
+cell set and points here. This is a deviation from the pre-registered
+wording, disclosed rather than silently carried. Whether H2 should be
+recomputed with the post-churn cells included is an open question for
+the study owner; no rerun is needed either way, since the churn records
+exist in results/cells.json.
