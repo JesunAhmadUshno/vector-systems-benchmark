@@ -1,5 +1,7 @@
 # Vector Systems Benchmark
 
+Live dashboard: https://jesunahmadushno.github.io/vector-systems-benchmark/
+
 ## The problem
 
 Production retrieval rarely runs unfiltered. A RAG system answers inside a
@@ -128,6 +130,9 @@ never edited.
   gate record.
 - DECISIONS.md: corpus, model and configuration decisions with reasons.
 - ROADMAP.md: the Deep pass, in evidence order.
+- docs/research-review.md: the study graded against a research rubric,
+  with each remaining gap and the compute it needs.
+- site/: the live dashboard, built from results/ by .github/workflows/pages.yml.
 
 ## Citations
 
