@@ -32,7 +32,7 @@ one selectivity band higher than the literature suggests: at shipped
 defaults and about 12 percent selectivity it returns a mean of 4.86
 results per query with a shortfall rate of 0.990, while at 1 percent
 no trap appears: the measured mean returned there is 10.00 where the
-candidate-starvation model predicts about 0.1, the pattern the
+candidate-starvation model predicts about 0.42 (ef_search 40 times selectivity 0.0105), the pattern the
 research pack's row 10 attributes to the planner leaving the ANN index
 at very low selectivity (H1 is refuted as pre-registered, and the
 trap's measured location is the finding). Qdrant in embedded local

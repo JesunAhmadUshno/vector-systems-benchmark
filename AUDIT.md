@@ -65,7 +65,7 @@
   mechanism for the missing trap at 1 percent selectivity; the README
   verdict now attributes that mechanism to the research pack's row 10
   and states the measured values (mean returned 10.00 against a model
-  prediction of about 0.1) as the evidence. The claim stands with that
+  prediction of about 0.42, ef_search 40 times selectivity 0.0105) as the evidence. The claim stands with that
   softening; the gate did not clear it, and this audit does not round
   the route up.
 
