@@ -37,7 +37,7 @@ Reason: one Python harness, no extra service to install, and the brief
 fixes this shape. The cost is recorded as a limitation: local mode is a
 Python implementation, so its latency is not the server's latency and
 its filtered recall is a floor, not the server's number. A server-mode
-rerun is the first item of the Deep pass (ROADMAP.md).
+rerun is the first item of the Deep pass (REPORT.md, Next steps).
 
 ## D4: FAISS index
 
@@ -79,7 +79,8 @@ about 27 minutes), which put the full study out of reach. The local
 engine, its search semantics and its limitations are the same in both
 variants; only the storage medium changes. The amendment was made and
 committed before a single Qdrant number was measured, so it cannot be
-result-driven. SPEC.md carries the matching amendment note. The client
+result-driven. The matching amendment note, first written into SPEC.md,
+now lives in D12, which restores SPEC.md to its locked text. The client
 also warns that payload indexes have no effect in local mode; the setup
 calls are kept for parity with the server configuration, and the warning
 is recorded in AUDIT.md.
@@ -143,3 +144,24 @@ wording, disclosed rather than silently carried. Whether H2 should be
 recomputed with the post-churn cells included is an open question for
 the study owner; no rerun is needed either way, since the churn records
 exist in results/cells.json.
+
+## D12: SPEC.md restored to its locked text; amendment note moved here (recorded 2026-11-08)
+
+SPEC.md and HYPOTHESES.md were committed together in 838e6da, before any
+code or result, and that commit is tagged proposal-v1. Commit 7ed6d8d
+later edited SPEC.md in place to record the D8 amendment, after the FAISS
+results of 4b559bd already existed. A locked plan is never edited after
+its lock, so SPEC.md is restored byte for byte to its 838e6da text and a
+test (tests/test_layout.py) pins its SHA-256. The amendment is not lost:
+D8 above is the decision, and the note that sat in SPEC.md is kept here
+verbatim. The bullet it amended read "Qdrant (qdrant-client, embedded
+local mode on disk)"; the edit dropped "on disk" and added:
+
+> Amendment, recorded after pre-registration and before any Qdrant
+> result existed: the in-memory storage variant of local mode is used,
+> because the on-disk variant ingested about 1,000 points per minute on
+> the study VM (DECISIONS.md, D8). The local engine and its semantics
+> are identical in both variants.
+
+Effect: none on any number or verdict; the study ran the in-memory
+variant, as D8 records.

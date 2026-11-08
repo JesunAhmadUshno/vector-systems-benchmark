@@ -4,8 +4,8 @@ import env from '../../results/env.json';
 import qenv from '../../results_qdrant/env.json';
 import resultsMd from '../../RESULTS.md?raw';
 import hypMd from '../../HYPOTHESES.md?raw';
-import auditMd from '../../AUDIT.md?raw';
-import { shortfallCI, staleCI, staleSlots, c2, c2Agrees, h6, pick, parseVerdicts, parsePrereg, parseAudit } from './stats.js';
+import reportMd from '../../REPORT.md?raw';
+import { shortfallCI, staleCI, staleSlots, c2, c2Agrees, h6, pick, parseVerdicts, parsePrereg, parseLimits } from './stats.js';
 
 const REPO = 'https://github.com/JesunAhmadUshno/vector-systems-benchmark';
 const blob = (p) => `${REPO}/blob/main/${p}`;
@@ -17,7 +17,7 @@ const ms = (x) => (x < 10 ? `${f2(x)} ms` : x < 1000 ? `${x.toFixed(1)} ms` : `$
 
 const PRE = parsePrereg(hypMd);
 const VERDICTS = parseVerdicts(resultsMd);
-const AUDIT = parseAudit(auditMd);
+const LIMITS = parseLimits(reportMd);
 const TITLES = Object.fromEntries([...hypMd.matchAll(/^## (H\d): (.+)$/gm)].map((m) => [m[1], m[2]]));
 const K = env.k;
 const SEL = env.filter_selectivity_measured;
@@ -516,7 +516,7 @@ function Picker() {
 
 const NOTES = {
   H2: 'The pre-registered H2 also lists the post-churn cell; the computation uses the five main cells, now disclosed in the evidence (DECISIONS.md D11).',
-  H3: 'Qdrant ran in embedded local mode, which is exact by construction, so this says nothing about the server’s filtered HNSW. A relabel to Inconclusive is proposed in docs/research-review.md and not applied.',
+  H3: 'Qdrant ran in embedded local mode, which is exact by construction, so this says nothing about the server’s filtered HNSW. A relabel to Inconclusive is proposed in REPORT.md (review findings) and not applied.',
 };
 
 function Hypotheses() {
@@ -540,7 +540,6 @@ function Hypotheses() {
 }
 
 function Limits() {
-  const max = Math.max(...AUDIT.items.map((i) => i.minus));
   const threats = [
     ['Qdrant is embedded local mode', `Its recall is exact by construction and its latency (up to ${ms(Math.max(...results.cells.filter((e) => e.backend === 'qdrant').map((e) => e.p95_ms)))} p95) is a Python scan, not the server product.`],
     ['Client-shape latency asymmetry', 'FAISS runs in process, pgvector over a socket, Qdrant as embedded Python: latency ranks deployed shapes, not index algorithms.'],
@@ -550,19 +549,14 @@ function Limits() {
     ['No per-query data', 'Recall, nDCG and latency vectors were not saved, so only shortfall and stale rates carry intervals here, and hybrid has no significance test.'],
   ];
   return (
-    <section id="limits" className="card window reveal" data-title="AUDIT.md — limitations">
+    <section id="limits" className="card window reveal" data-title="REPORT.md — limitations">
       <p className="eyebrow">Limitations and audit</p>
-      <h2>Graded {fmt(AUDIT.grade)} of {fmt(AUDIT.scale)}, with every deduction itemized.</h2>
-      <p className="sub">The study’s own audit, parsed from <a href={blob('AUDIT.md')}>AUDIT.md</a>. Deductions total {fmt(AUDIT.total)}; nothing is rounded up.</p>
+      <h2>{LIMITS.length} named limitations, each with its effect on the claims.</h2>
+      <p className="sub">Parsed from <a href={blob('REPORT.md')}>REPORT.md</a>; run integrity, licences and the Jev gate are in <a href={blob('AUDIT.md')}>AUDIT.md</a>.</p>
       <div className="grid2" style={{ marginTop: 16, alignItems: 'start' }}>
-        <div className="bars">
-          {AUDIT.items.map((i) => (
-            <div className="bar-row" key={i.text}>
-              <div className="lab"><span>{i.text.split(/: |; |\. /)[0]}</span><b>−{fmt(i.minus)}</b></div>
-              <div className="track"><div className="fill" style={{ width: `${(i.minus / max) * 100}%`, background: 'var(--warn)' }} /></div>
-            </div>
-          ))}
-        </div>
+        <ul className="checks">
+          {LIMITS.map((t) => <li key={t} className="no"><span aria-hidden="true">!</span> {t}</li>)}
+        </ul>
         <div className="threats">
           {threats.map(([t, d]) => <div className="tile" key={t}><h3>{t}</h3><p className="hint" style={{ margin: '4px 0 0' }}>{d}</p></div>)}
         </div>
@@ -581,8 +575,8 @@ function Reproduce() {
     ['HYPOTHESES.md', 'Hypotheses', 'H1 to H6, thresholds, falsifiers'],
     ['METHODS.md', 'Methods', 'Formulas, controls, threats'],
     ['RESULTS.md', 'Results', 'Generated, never hand-edited'],
-    ['AUDIT.md', 'Audit', 'Run integrity, licences, grade'],
-    ['docs/research-review.md', 'Research review', 'Rubric grade and open gaps'],
+    ['REPORT.md', 'Report', 'Verdict, misses, limitations, next steps'],
+    ['AUDIT.md', 'Audit', 'Run integrity, licences, Jev gate'],
   ];
   return (
     <section id="reproduce" className="card window reveal" data-title="Terminal — reproduce">

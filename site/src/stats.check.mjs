@@ -2,7 +2,7 @@
 // Every browser computation is reproduced against the repo's own generated files.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { wilson, shortfallCI, staleCI, staleSlots, c2, c2Agrees, h6, pick, parseVerdicts, parseC2, parsePrereg, parseAudit } from './stats.js';
+import { wilson, shortfallCI, staleCI, staleSlots, c2, c2Agrees, h6, pick, parseVerdicts, parseC2, parsePrereg, parseLimits } from './stats.js';
 
 const root = new URL('../../', import.meta.url);
 const read = (p) => fs.readFileSync(new URL(p, root), 'utf8');
@@ -54,10 +54,9 @@ assert.deepEqual(ok('tenant_t5', { freshness: true, needHybrid: false }), ['pgve
 assert.deepEqual(ok('none', { freshness: false, needHybrid: false }), ['faiss', 'pgvector', 'qdrant']);
 assert.deepEqual(ok('none', { freshness: false, needHybrid: true }), ['faiss', 'qdrant']);
 
-// 5. Audit grade parses and adds up.
-const audit = parseAudit(read('AUDIT.md'));
-assert.equal(audit.grade, 7300);
-assert.equal(audit.items.reduce((s, i) => s + i.minus, 0), audit.total);
-assert.equal(audit.scale - audit.total, audit.grade);
+// 5. The limitations list parses from REPORT.md and carries no points (grades are internal).
+const limits = parseLimits(read('REPORT.md'));
+assert.ok(limits.length >= 10);
+assert.ok(limits.every((t) => !/Minus \d/.test(t)));
 
-console.log('stats ok', { c2: c2md, h6: r6.verdict, deductions: audit.items.length, grade: audit.grade });
+console.log('stats ok', { c2: c2md, h6: r6.verdict, limitations: limits.length });
