@@ -67,16 +67,11 @@ silently, so builders can protect those users.
   uses IDSelectorBatch at search time. Deletes are handled two ways, both
   measured: no bookkeeping (raw index, deleted ids can return) and an
   exclusion selector over the deleted id set.
-- Qdrant (qdrant-client, embedded local mode): one collection,
+- Qdrant (qdrant-client, embedded local mode on disk): one collection,
   cosine distance, HNSW M = 32, efConstruct = 200. Payload indexes on
   `tenant` and `article` are created before ingestion, so filter-aware
   graph edges can be built (see the research pack, row 14). Hybrid uses
   native sparse plus dense vectors with RRF fusion in the Query API.
-  Amendment, recorded after pre-registration and before any Qdrant
-  result existed: the in-memory storage variant of local mode is used,
-  because the on-disk variant ingested about 1,000 points per minute on
-  the study VM (DECISIONS.md, D8). The local engine and its semantics
-  are identical in both variants.
 - pgvector: PostgreSQL with the pgvector extension, HNSW index
   (m = 32, ef_construction = 200), cosine distance. Filtering is a SQL
   WHERE clause on indexed metadata columns. Hybrid combines tsvector

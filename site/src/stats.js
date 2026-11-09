@@ -1,5 +1,5 @@
 // Pure computations used by the page. stats.check.mjs runs every one of them against
-// the repo's own files (results/*.json, RESULTS.md, HYPOTHESES.md, AUDIT.md) before each build.
+// the repo's own files (results/*.json, RESULTS.md, HYPOTHESES.md, REPORT.md) before each build.
 
 // Wilson score 95% interval, same formula as wilson() in src/vectorbench/generate_results.py.
 export function wilson(p, n, z = 1.959964) {
@@ -62,7 +62,7 @@ export function pick({ cells, churn, hybrid }, cell, { freshness, needHybrid, re
   return rows;
 }
 
-// ---- Markdown parsers: verdicts, thresholds and the audit grade come from the repo's own text ----
+// ---- Markdown parsers: verdicts, thresholds and the limitations come from the repo's own text ----
 const need = (m, what) => { if (!m) throw new Error(`could not parse ${what}`); return m; };
 const num = (s) => +String(s).replace(/,/g, '');
 
@@ -87,13 +87,9 @@ export function parsePrereg(hypMd) {
   };
 }
 
-export function parseAudit(auditMd) {
-  const g = need(auditMd.match(/Build grade on the house ([\d,]+) scale: ([\d,]+)\./), 'grade');
-  const section = need(auditMd.match(/## Grade\n([\s\S]*?)\nTotal deductions ([\d,]+)/), 'grade section');
-  const items = section[1].split(/\n- /).slice(1).map((s) => {
-    const t = s.replace(/\s+/g, ' ').trim();
-    const m = need(t.match(/^(.*?)\s*Minus ([\d,]+)\.$/), `deduction "${t.slice(0, 40)}"`);
-    return { text: m[1], minus: num(m[2]) };
-  });
-  return { scale: num(g[1]), grade: num(g[2]), total: num(section[2]), items };
+export function parseLimits(reportMd) {
+  const section = need(reportMd.match(/Itemized limitations of this build[^\n]*\n\n([\s\S]*?)\n\n## /), 'limitations list in REPORT.md');
+  const items = section[1].split(/^- /m).slice(1).map((s) => s.replace(/\s+/g, ' ').trim());
+  need(items.length > 0, 'limitation items');
+  return items;
 }

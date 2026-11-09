@@ -103,42 +103,11 @@
   fetch of a public dataset.
 - No secrets are used or stored by this repository.
 
-## Grade
+## Limitations
 
-Build grade on the house 10,000 scale: 7,300. Deductions are floored
-and itemized; nothing is rounded up.
-
-- Qdrant server product not measured: local mode is exact by
-  construction, so the Qdrant recall column cannot evidence the
-  deployed product's filtered search. Minus 700.
-- Qdrant protocol asymmetry (D10): 100 queries and 2 repetitions
-  against 300 and 3 for the other backends; latency tails less stable.
-  Minus 300.
-- Single corpus, single embedding model, single chunk size, one scale
-  (58,999 chunks): regime boundaries may move with any of them.
-  Minus 300.
-- Latency compares three client shapes (in-process, SQL over a socket,
-  embedded Python), so it ranks deployed shapes, not index algorithms.
-  Minus 250.
-- Hybrid limits: no paired significance test, and the pgvector lexical
-  arm is PostgreSQL full-text search rather than the shared BM25, so
-  its hybrid gain is not encoder-controlled. Minus 250.
-- Breadth tuned once on the unfiltered cell and frozen by design, so
-  there is no matched-recall Pareto frontier; latency is compared at
-  unmatched recall points. Minus 200.
-- pgvector latency may carry contention from a parallel run (see Run
-  integrity); disclosed, not corrected. Minus 150.
-- One churn rate (10 percent) and one churn pattern. Minus 150.
-- Jev claim_check returned REVIEW (noul 0.47), not clear; the headline
-  claim ships on a documented self-audit with one softened clause.
-  Minus 150.
-- No replication pass: one run per backend, repetitions within the run
-  only. Minus 150.
-- Memory and build cost per backend not measured (the research pack's
-  C1 estimate stays unchecked until the Deep pass). Minus 100.
-
-Total deductions 2,700. The Deep pass (ROADMAP.md) is scoped to close
-these items in evidence order.
+The itemized limitations of this build, each with its effect on the
+claims, are in REPORT.md under "Limitations". The Deep pass (REPORT.md,
+Next steps) is scoped to close them in evidence order.
 
 ## Maintenance audit
 
@@ -147,7 +116,7 @@ these items in evidence order.
   reruns with one command (METHODS.md) and RESULTS.md is regenerated,
   never edited.
 - Known weak points, in order: Qdrant local mode is not the server
-  (ROADMAP item 1), its recall is exact by construction, and its cells
+  (REPORT.md next step 1), its recall is exact by construction, and its cells
   rest on 100 queries and 2 repetitions (D10); latency compares three
   different client shapes (in-process FAISS, SQL over a socket,
   embedded Python), so it ranks deployed shapes, not index algorithms;

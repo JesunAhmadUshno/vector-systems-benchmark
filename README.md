@@ -1,63 +1,98 @@
 # Vector Systems Benchmark
 
+**Question.** On one node, with one shared corpus of real text, how do
+FAISS, PostgreSQL with pgvector, and Qdrant compare on recall, latency,
+filtered recall, freshness under churn and hybrid quality as filter
+selectivity, update churn and hybrid demand change?
+
+**Headline.** Under a tight filter (about 1 percent selectivity), FAISS
+HNSW returned fewer than 10 results on 26.7 percent of queries (Wilson
+95% interval 22.0 to 31.9 percent, 300 queries; recall@10 0.413) while
+pgvector with iterative scan returned all 10 (recall@10 1.000); at
+shipped defaults pgvector's overfiltering trap appeared one band higher,
+at about 12 percent selectivity (shortfall 0.990, interval 0.971 to
+0.997), not at 1 percent, so H1 is refuted as pre-registered.
+
+**Field.** Systems, performance measurement. **Job family.** AI platform
+and retrieval infrastructure engineering.
+
+**Verdict.** Functional. The plan was locked before any code (SPEC.md
+and HYPOTHESES.md, commit 838e6da, tag proposal-v1), the study ran end
+to end on all three engines with its outputs committed in results/, the
+tests pass in CI on Python 3.11 and 3.12, and CI regenerates RESULTS.md
+unchanged from that evidence. Not Evaluated: the performance profile is
+not met (no warm-up runs, only the median repetition's latency kept,
+co-tenancy not recorded per run, Qdrant measured in embedded local mode
+under a reduced protocol), and no second reader has re-derived the
+numbers yet. REPORT.md gives the reasons item by item.
+
 Live dashboard: https://jesunahmadushno.github.io/vector-systems-benchmark/
 
-## The problem
+## Reproduce
 
-Production retrieval rarely runs unfiltered. A RAG system answers inside a
-tenant, a permission boundary, a language, a date range. Under those
-filters, a vector engine can fail silently: it returns fewer results than
-asked, or worse ones, and raises no error. The pgvector documentation
-names the failure "overfiltering". For a user of a permission-scoped
-assistant, a silent retrieval miss becomes a confident wrong answer. A
-deleted document that still appears in results is the same class of harm.
+Checks, anywhere (no corpus, no database):
 
-## Purpose
+```text
+python -m pip install -r requirements.txt
+python -m pip install -e . pytest
+python -m pytest tests/ -q
+python -m vectorbench.generate_results && git diff --exit-code RESULTS.md results/
+```
 
-Measure, on one shared corpus of real text and one node, how FAISS,
-PostgreSQL with pgvector, and Qdrant behave as three workload variables
-change: metadata filter selectivity, update churn, and hybrid (lexical
-plus dense) demand. The output is a measured regime map, not a ranking.
-Hypotheses were pre-registered before any experiment code was written
-(see SPEC.md and HYPOTHESES.md; the git history shows the order).
+The full study (one command, CPU only; it downloads SQuAD v1.1 and caches
+about 59k chunks and their embeddings in data/):
 
-## Verdict
+```text
+python -m vectorbench.run_benchmark --backends faiss,qdrant,pgvector
+python -m vectorbench.generate_results
+```
 
-No universal winner, and the map has sharp edges. Unfiltered, FAISS is
-the fastest by a wide margin (p95 0.47 ms at recall 0.967, against
-3.05 ms for pgvector and 299.53 ms for embedded Qdrant). Under a tight
-filter at about 1 percent selectivity, FAISS recall falls to 0.413 with
-a shortfall rate of 0.267: post-filtering an HNSW candidate set starves
-as selectivity drops. pgvector with iterative scan holds recall 1.000
-in the same cell. Its documented overfiltering trap turns out to live
-one selectivity band higher than the literature suggests: at shipped
-defaults and about 12 percent selectivity it returns a mean of 4.86
-results per query with a shortfall rate of 0.990, while at 1 percent
-no trap appears: the measured mean returned there is 10.00 where the
-candidate-starvation model predicts about 0.42 (ef_search 40 times selectivity 0.0105), the pattern the
-research pack's row 10 attributes to the planner leaving the ANN index
-at very low selectivity (H1 is refuted as pre-registered, and the
-trap's measured location is the finding). Qdrant in embedded local
-mode is exact by construction, recall 1.000 in every cell, and its
-latency (up to 3.69 s p95 in the tight cell) measures a Python
-brute-force scan, not the server product; the server's filtered HNSW
-stays unmeasured here (ROADMAP item 1). Under a 10 percent churn cycle,
-FAISS without external bookkeeping keeps serving deleted vectors at a
-stale rate of 0.113; with bookkeeping, and in pgvector and Qdrant, the
-stale rate is 0.000. Hybrid fusion pays where the lexical arm is the
-shared BM25 encoder (FAISS +0.047 nDCG@10; Qdrant native RRF +0.069)
-and barely where it is PostgreSQL full-text search (+0.017).
+The pgvector arm needs a local PostgreSQL with the pgvector extension and
+a database named vsbench (AUDIT.md describes the setup used). RESULTS.md
+is regenerated, never edited.
 
-## Headline results
+## Lifecycle
 
-| Backend | Unfiltered recall@10 | Unfiltered p95 ms | Tight filter recall@10 | Tight shortfall | Post-churn recall drop | Hybrid nDCG@10 (dense to hybrid) |
-|---|---|---|---|---|---|---|
-| faiss | 0.967 | 0.47 | 0.413 | 0.267 | 0.009 | 0.374 to 0.421 |
-| pgvector | 0.978 | 3.05 | 1.000 | 0.000 | 0.002 | 0.375 to 0.392 |
-| qdrant | 1.000 | 299.53 | 1.000 | 0.000 | 0.000 | 0.387 to 0.456 |
+- Question: DONE 2026-11-06
+- Proposal: DONE 2026-11-06
+- Baseline: DONE 2026-11-06
+- Build: DONE 2026-11-06
+- Evaluate: PARTIAL 2026-11-07
+- Report: DONE 2026-11-08
+- Review: OPEN
+- Release: OPEN
 
-Full generated results, including the trap cell, the churn cells, the
-tuning ladders, and the per-hypothesis evidence: RESULTS.md.
+## Layout
+
+Files named in the locked SPEC.md keep their names (SPEC.md,
+HYPOTHESES.md, METHODS.md, RESULTS.md, results/env.json); the second
+column gives the role each plays in the portfolio standard.
+
+| Path | Role | What it holds |
+| --- | --- | --- |
+| SPEC.md, HYPOTHESES.md | proposal | The locked design and H1 to H6 with thresholds (tag proposal-v1); a test fails if one byte changes |
+| REPORT.md | report | Verdict, background, results, every hypothesis scored with misses, limitations, review findings, next steps |
+| RESULTS.md, results/RESULTS.md, results/readme_table.md | results | Generated by src/vectorbench/generate_results.py from results/cells.json |
+| results/, results_pg/, results_qdrant/ | evidence | Measured cells and environment per backend (FAISS, pgvector, Qdrant), merged into results/cells.json |
+| DECISIONS.md | decisions | D1 to D12, each with options, verdict and reason; amendments dated against the runs they affect |
+| METHODS.md | method | Data, controls, formulas, sample sizes, threats to validity |
+| RESEARCH.md | background | The literature base, with vendor claims labelled |
+| AUDIT.md | audit | Claim, run-integrity, Jev gate, data, licence, cost and security audit |
+| src/vectorbench/ | code | Corpus, embeddings, exact ground truth, BM25, three adapters, runner, results generator |
+| tests/ | tests | Metrics, BM25, corpus, ground truth, FAISS adapter, verdict logic, layout and lock |
+| site/ | dashboard | The live dashboard, built from results/ and the Markdown by .github/workflows/pages.yml |
+
+There is no experiments/ folder: the locked SPEC.md names results/ as
+the home of the evidence, so the raw cells stay there.
+
+## Problem
+
+Production retrieval rarely runs unfiltered: a RAG system answers inside
+a tenant, a permission boundary, a language, a date range. Under those
+filters a vector engine can fail silently, returning fewer or worse
+results with no error. For a user of a permission-scoped assistant, a
+silent retrieval miss becomes a confident wrong answer. REPORT.md has
+the full background.
 
 ## Architecture
 
@@ -80,76 +115,10 @@ interface (build, search with a filter spec, delete, insert):
   parity and have no effect in local mode), and pgvector (HNSW, SQL
   filters, iterative scan arms, SQL hybrid) implementations.
 - run_benchmark.py runs the cells and writes results/*.json.
-  generate_results.py renders RESULTS.md and the table above from those
-  files. No number is typed by hand.
+  generate_results.py renders RESULTS.md and the headline table from
+  those files. No number is typed by hand.
 
-## Reproduce
+## License
 
-```
-python -m pip install -r requirements.txt
-python -m pip install -e .
-python -m pytest tests/
-python -m vectorbench.run_benchmark --backends faiss,qdrant,pgvector
-python -m vectorbench.generate_results
-```
-
-The pgvector arm needs a local PostgreSQL with the pgvector extension
-and a database named vsbench (see AUDIT.md for the setup used here).
-Corpus and embeddings are cached in data/ on first run (about 59k
-chunks). One command reruns the whole study; RESULTS.md is regenerated,
-never edited.
-
-## Limitations
-
-- Single node, CPU only, corpus fits in RAM. Nothing here speaks about
-  clusters, GPUs, or billion-scale data.
-- Qdrant runs in embedded local mode, a Python implementation, not the
-  production server. Its latency is not the server's latency, and its
-  filtered recall is exact by construction, so it cannot evidence the
-  server product's filtered recall at all. A server-mode rerun is
-  ROADMAP item 1.
-- Qdrant ran at 100 queries and 2 repetitions against 300 and 3 for
-  the other backends (DECISIONS.md D10): local mode costs about a
-  second per query at this scale. Its latency percentiles rest on the
-  smaller sample.
-- FAISS runs in process while the others run through clients, so latency
-  compares deployed shapes, not only index algorithms.
-- One corpus, one embedding model, one chunk size, one churn rate (10
-  percent). Regime boundaries can move with any of them.
-- Hybrid relevance is derived from SQuAD's paragraph structure, not from
-  human relevance judgments.
-
-## Files
-
-- SPEC.md: the pre-registered study design.
-- HYPOTHESES.md: H1 to H6 with thresholds and falsification rules.
-- RESEARCH.md: the literature base, with vendor claims labelled.
-- METHODS.md: formulas, controls, sample sizes, threats to validity.
-- RESULTS.md: generated results and hypothesis verdicts.
-- AUDIT.md: claim, data, licence, cost and security audit, and the Jev
-  gate record.
-- DECISIONS.md: corpus, model and configuration decisions with reasons.
-- ROADMAP.md: the Deep pass, in evidence order.
-- docs/research-review.md: the study graded against a research rubric,
-  with each remaining gap and the compute it needs.
-- site/: the live dashboard, built from results/ by .github/workflows/pages.yml.
-
-## Citations
-
-- Douze et al., "The Faiss library", arXiv:2401.08281.
-- Malkov and Yashunin, "Efficient and robust approximate nearest
-  neighbor search using Hierarchical Navigable Small World graphs",
-  IEEE TPAMI 42(4), 2020.
-- pgvector documentation and 0.8.0 release notes, github.com/pgvector/pgvector.
-- Qdrant documentation: indexing, hybrid queries, optimizer,
-  docs.qdrant.tech.
-- Gollapudi et al., "Filtered-DiskANN", WWW 2023.
-- Simhadri et al., "Results of the Big ANN NeurIPS'23 competition",
-  NeurIPS 2025 Datasets and Benchmarks.
-- Aumuller, Bernhardsson, Faithfull, "ANN-Benchmarks", Information
-  Systems, 2020.
-- Rajpurkar et al., "SQuAD: 100,000+ Questions for Machine Comprehension
-  of Text", EMNLP 2016 (dataset licence CC BY-SA 4.0).
-
-Licence: Apache-2.0 for code. The corpus is not redistributed here; it is
-built locally from the public SQuAD release.
+Apache-2.0 for code (LICENSE). The corpus is not redistributed here; it
+is built locally from the public SQuAD release.

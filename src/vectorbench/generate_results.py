@@ -177,7 +177,7 @@ def verdicts(results) -> list[dict]:
               f"Caveat: measured in embedded local mode, which the client itself warns "
               f"performs exact brute-force search; this supports the hypothesis for the "
               f"embedded engine only. The server product's filtered HNSW is not measured "
-              f"here and stays Not yet measured (ROADMAP item 1).")
+              f"here and stays Not yet measured (REPORT.md next step 1).")
         if q_t5["recall10"] >= 0.90 and q_t5["shortfall_rate"] == 0:
             v = "Supported"
         elif q_t5["recall10"] >= 0.90:

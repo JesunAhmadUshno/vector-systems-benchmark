@@ -77,7 +77,7 @@
   differences are reported as measured effect sizes, and the verdict
   rules in HYPOTHESES.md use fixed thresholds, not significance tests.
   The hybrid cell reports mean nDCG over the scored questions without a
-  paired test; the Deep pass adds one (see ROADMAP.md).
+  paired test; the Deep pass adds one (see REPORT.md, Next steps).
 
 ## Reproduction
 
