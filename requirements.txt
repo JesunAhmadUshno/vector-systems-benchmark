@@ -1,5 +1,5 @@
 numpy>=1.26
-faiss-cpu>=1.9
+faiss-cpu>=1.15.1
 model2vec>=0.3
 qdrant-client>=1.12
 psycopg[binary]>=3.2
