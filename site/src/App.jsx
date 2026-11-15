@@ -96,7 +96,7 @@ function Range({ label, value, min, max, step, onChange, show }) {
 export default function App() {
   useReveal();
   return (
-    <div className="wrap">
+    <div className="wrap"><a className="skip" href="#top">Skip to content</a>
       <MenuBar />
       <div className="glow" aria-hidden="true" />
       <Hero />
@@ -112,7 +112,7 @@ export default function App() {
       <footer>
         Corpus: SQuAD v1.1 (Rajpurkar et al., 2016), {env.corpus_licence}. Embeddings: {env.embedding_model} ({env.embedding_model_licence}). Code: Apache-2.0.
         Every number on this page is read from <code>results/</code> and the repo’s generated Markdown at build time; the calculators run in your browser on those recorded numbers.
-      </footer>
+      <nav className="support" aria-label="Support this work"><a href="https://github.com/sponsors/JesunAhmadUshno">Sponsor this work</a><a href="https://github.com/sponsors/JesunAhmadUshno">Donate</a><a href="https://buymeacoffee.com/jesun">Buy Me a Coffee</a><a href="https://calendly.com/jesunahmadushno/30min">Work with me</a></nav></footer>
     </div>
   );
 }
@@ -192,7 +192,7 @@ function Regime() {
     return `${NAME[e.backend]} (${e.arm}) · ${CELL_LABEL[e.cell]}, selectivity ${f3(e.selectivity)}: ${m.label} ${m.fmt(e[metric])}${ci ? `, 95% Wilson CI ${f3(ci[0])} to ${f3(ci[1])}` : ''} · n = ${e.n_queries} queries × ${e.reps} reps${e.backend === 'qdrant' ? ` · ${QDRANT_NOTE}` : ''}`;
   };
   return (
-    <section id="regime" className="card window reveal" data-title="cells.json — regime map">
+    <section id="regime" className="card window reveal" data-title="cells.json - regime map">
       <div className="head">
         <div>
           <p className="eyebrow">Recorded replay · {results.cells.length} main cells</p>
@@ -277,7 +277,7 @@ function Trap() {
     { e: trapT5, text: `recorded ${f2(trapT5.mean_returned)}: planner leaves the index`, anchor: 'start', dx: 10 },
   ];
   return (
-    <section id="trap" className="card window reveal" data-title="trap_defaults.sql — C2 calculator">
+    <section id="trap" className="card window reveal" data-title="trap_defaults.sql - C2 calculator">
       <div className="head">
         <div>
           <p className="eyebrow">Live calculator · C2 candidate-starvation model</p>
@@ -331,7 +331,7 @@ function Trap() {
                   <td>selectivity {f3(e.selectivity)}</td><td>{label}</td><td>{f3(e.recall10)}</td>
                   <td className={e.shortfall_rate > 0 ? 'no' : 'ok'}>{f3(e.shortfall_rate)} <span className="hint">({f3(ci[0])} to {f3(ci[1])})</span></td>
                   <td>{f2(e.mean_returned)}</td>
-                  <td>{pred == null ? '—' : <>{f2(pred)} <span className={`pill ${agrees ? 'good' : 'warn'}`}>{agrees ? 'agrees' : 'disagrees'}</span></>}</td>
+                  <td>{pred == null ? '-' : <>{f2(pred)} <span className={`pill ${agrees ? 'good' : 'warn'}`}>{agrees ? 'agrees' : 'disagrees'}</span></>}</td>
                 </tr>
               );
             })}
@@ -417,7 +417,7 @@ function Hybrid() {
   const gw = (W - pad.l - pad.r) / BACKENDS.length, bw = Math.min(70, gw / 5);
   const shade = { dense: 0.45, bm25_shared: 0.22, hybrid: 1 };
   return (
-    <section id="hybrid" className="card window reveal" data-title="rrf_fusion.py — hybrid search">
+    <section id="hybrid" className="card window reveal" data-title="rrf_fusion.py - hybrid search">
       <div className="head">
         <div>
           <p className="eyebrow">Recorded · sensitivity view</p>
@@ -522,7 +522,7 @@ const NOTES = {
 function Hypotheses() {
   const refuted = VERDICTS.filter((v) => v.verdict === 'Refuted').length;
   return (
-    <section id="hypotheses" className="card window reveal" data-title="HYPOTHESES.md — scorecard">
+    <section id="hypotheses" className="card window reveal" data-title="HYPOTHESES.md - scorecard">
       <p className="eyebrow">Pre-registered hypotheses · verdicts generated</p>
       <h2>{VERDICTS.length} predictions, committed before the code. {refuted} {refuted === 1 ? 'was' : 'were'} <em>refuted</em>.</h2>
       <p className="sub">Verdict words and evidence are read from the generated <a href={blob('RESULTS.md')}>RESULTS.md</a> at build time; the build re-derives H6 in JavaScript and fails if they disagree.</p>
@@ -549,7 +549,7 @@ function Limits() {
     ['No per-query data', 'Recall, nDCG and latency vectors were not saved, so only shortfall and stale rates carry intervals here, and hybrid has no significance test.'],
   ];
   return (
-    <section id="limits" className="card window reveal" data-title="REPORT.md — limitations">
+    <section id="limits" className="card window reveal" data-title="REPORT.md - limitations">
       <p className="eyebrow">Limitations and audit</p>
       <h2>{LIMITS.length} named limitations, each with its effect on the claims.</h2>
       <p className="sub">Parsed from <a href={blob('REPORT.md')}>REPORT.md</a>; run integrity, licences and the Jev gate are in <a href={blob('AUDIT.md')}>AUDIT.md</a>.</p>
@@ -579,7 +579,7 @@ function Reproduce() {
     ['AUDIT.md', 'Audit', 'Run integrity, licences, Jev gate'],
   ];
   return (
-    <section id="reproduce" className="card window reveal" data-title="Terminal — reproduce">
+    <section id="reproduce" className="card window reveal" data-title="Terminal - reproduce">
       <p className="eyebrow">Reproduce it</p>
       <h2>One harness reruns the study; the results file regenerates the page.</h2>
       <ol className="steps" style={{ marginTop: 16 }}>
