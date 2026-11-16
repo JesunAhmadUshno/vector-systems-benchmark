@@ -122,3 +122,11 @@ interface (build, search with a filter spec, delete, insert):
 
 Apache-2.0 for code (LICENSE). The corpus is not redistributed here; it
 is built locally from the public SQuAD release.
+
+## Paper
+
+Jesun Ahmad Ushno. "Filtered Vector Search Is a Regime Map, Not a Leaderboard: FAISS, pgvector, and Qdrant under Selectivity, Churn, and Hybrid Fusion." Preprint, Zenodo, version 2 (2026). CC-BY 4.0.
+
+- Concept DOI: [10.5281/zenodo.24282172](https://doi.org/10.5281/zenodo.24282172)
+- Version 2 DOI: [10.5281/zenodo.24283784](https://doi.org/10.5281/zenodo.24283784)
+- Software DOI for this code (release v1.0.0): [10.5281/zenodo.24282380](https://doi.org/10.5281/zenodo.24282380)
