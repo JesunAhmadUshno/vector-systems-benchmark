@@ -165,3 +165,51 @@ local mode on disk)"; the edit dropped "on disk" and added:
 
 Effect: none on any number or verdict; the study ran the in-memory
 variant, as D8 records.
+## D13: Post-registration amendment: paired per-question bootstrap for the hybrid gains (registered before the run)
+Numbering note (added 2026-11-17, when this entry was merged to main): this amendment was written as D11 in the local record of 2026-11-16 and is cited as D11 in version 2 of the preprint (Zenodo DOI 10.5281/zenodo.24283784). On main, D11 and D12 were already taken by later records, so the amendment is filed here as D13. Same amendment, same dates, no content change; its output files keep their recorded names (results/amendment_d11.json, src/vectorbench/amendment_d11.py).
+
+Recorded 2026-11-16, before any computation under this amendment ran.
+Motivation: the paper reports the H6 hybrid gains as mean nDCG@10
+differences (FAISS plus 0.047, pgvector plus 0.017, Qdrant plus 0.069)
+with no paired test, and says so in its limitations. This amendment
+adds paired bootstrap intervals for the gain, per backend, from a
+rerun of the hybrid arms that records per-question nDCG@10 for the
+dense, sparse, and hybrid arms.
+
+Specification, frozen before the run:
+
+- Same corpus, embeddings, question sample (250 SQuAD questions, seed
+  99), relevance rule, and RRF rule (k = 60) as the registered hybrid
+  cell. The rerun's aggregate nDCG@10 per arm must reproduce the
+  committed results within rounding (0.001); if an arm does not
+  reproduce, the amendment reports the discrepancy instead of the
+  interval for that backend.
+- 2,000 bootstrap resamples over the 250 questions, with replacement,
+  seed 20261116. In each resample, the mean hybrid-minus-dense
+  nDCG@10 difference is recomputed from the paired per-question
+  scores. Reported per backend: the point gain, the bootstrap mean,
+  and the 2.5 and 97.5 percentile interval.
+- Scope limit, stated in advance: the pgvector hybrid arm runs
+  inside PostgreSQL, which is not available in the reproduction
+  environment (no PostgreSQL, no container runtime), so its
+  per-question scores cannot be regenerated there. The amendment
+  covers the FAISS and Qdrant arms; the pgvector gain keeps its
+  aggregate-only status, and the paper will say exactly that.
+- No verdict changes: H6 stays Partially supported as registered.
+  The intervals are reported as an amendment in version 2 of the
+  preprint (Zenodo DOI 10.5281/zenodo.24282173).
+
+Output: results/amendment_d11.json, written by the amendment script;
+this entry gains no retroactive edits.
+
+D13 results note (appended after the runs, 2026-11-16): both
+covered arms reproduced their committed aggregates exactly (FAISS
+dense 0.374, hybrid 0.421; Qdrant dense 0.387, hybrid 0.456), so
+the intervals stand as registered. FAISS: point gain plus 0.0468,
+95 percent interval plus 0.0296 to plus 0.0645. Qdrant: point gain
+plus 0.0694, interval plus 0.0519 to plus 0.0869. Both intervals
+exclude zero and the registered 0.02 line. The pgvector arm was
+not covered (no PostgreSQL in the reproduction environment); its
+plus 0.017 gain keeps its aggregate-only status. H6 stands
+Partially supported as registered. Record:
+results/amendment_d11.json; script src/vectorbench/amendment_d11.py.

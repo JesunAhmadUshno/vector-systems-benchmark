@@ -1,0 +1,47 @@
+{
+ "registered_in": "DECISIONS.md D11 (2026-11-16, before this run)",
+ "status": "exploratory post-hoc amendment; H6 verdict unchanged",
+ "backends": {
+  "faiss": {
+   "n_questions": 250,
+   "point_gain": 0.046772,
+   "bootstrap_mean_gain": 0.046776,
+   "ci95_percentile": [
+    0.029646,
+    0.06451
+   ],
+   "aggregate_ndcg10": {
+    "dense": 0.373999,
+    "hybrid": 0.42077
+   },
+   "validation_vs_committed": {
+    "dense_committed": 0.3739985014131934,
+    "hybrid_committed": 0.42077019650764885,
+    "dense_reproduced_within_0.001": true,
+    "hybrid_reproduced_within_0.001": true
+   }
+  },
+  "qdrant": {
+   "n_questions": 250,
+   "point_gain": 0.069373,
+   "bootstrap_mean_gain": 0.069451,
+   "ci95_percentile": [
+    0.051908,
+    0.086867
+   ],
+   "aggregate_ndcg10": {
+    "dense": 0.386518,
+    "hybrid": 0.45589
+   },
+   "validation_vs_committed": {
+    "dense_committed": 0.38651759158505056,
+    "hybrid_committed": 0.4558904488739573,
+    "dense_reproduced_within_0.001": true,
+    "hybrid_reproduced_within_0.001": true
+   }
+  }
+ },
+ "pgvector": {
+  "status": "not covered: the pgvector hybrid arm runs inside PostgreSQL, unavailable in this environment; its gain (plus 0.017, aggregate) keeps its aggregate-only status."
+ }
+}
