@@ -213,3 +213,177 @@ not covered (no PostgreSQL in the reproduction environment); its
 plus 0.017 gain keeps its aggregate-only status. H6 stands
 Partially supported as registered. Record:
 results/amendment_d11.json; script src/vectorbench/amendment_d11.py.
+
+## D14: Post-registration amendment: per-cell recall@10 uncertainty intervals (registered before the run)
+
+Recorded 2026-11-17, before any computation under this amendment ran.
+Motivation: RESULTS.md states that recall carries no interval because
+per-query values were not saved ("Recall, nDCG and latency carry no
+interval: per-query values were not saved"). This amendment adds
+per-query bootstrap intervals for the headline recall cells of all
+three systems, including the post-churn cells, without changing any
+verdict.
+
+Specification, frozen before the run:
+
+- Method: per-query bootstrap, 10,000 resamples over the queries of
+  each cell, with replacement, seed 20261117; the reported interval
+  is the 2.5 and 97.5 percentile of the resample means of per-query
+  recall@10.
+- Source of per-query values, per system, stated in advance:
+  - FAISS: per-query recall is re-derived by re-running the FAISS
+    cells (the five main cells, plus the post-churn raw and
+    bookkeeping arms on the unfiltered and tight cells) with the
+    repo harness at the committed frozen breadth (40) on the cached
+    corpus artifacts in data/ (the same artifacts the D13 amendment
+    used). Validation rule: each re-derived cell aggregate must
+    reproduce the committed results/cells.json recall@10 within
+    0.001, or the interval for that cell is not reported and the
+    discrepancy is reported instead. Recall is deterministic across
+    repetitions in the committed record (recall_runs are identical),
+    so one repetition is run for the per-query capture.
+  - Qdrant (embedded): every committed Qdrant cell, main and
+    post-churn, records recall@10 of exactly 1.000. Per-query
+    recall@10 cannot exceed 1.0, so a mean of exactly 1.000 forces
+    every per-query value to 1.0; the bootstrap interval is the
+    degenerate interval [1.000, 1.000]. No rerun is needed or run
+    for this.
+  - pgvector: per-query values were not saved and PostgreSQL is
+    not available in this environment, so per-query values cannot
+    be re-derived here. Cells at exactly 1.000 get the same
+    degenerate interval as Qdrant. For the remaining pgvector cells
+    no per-query interval is claimed; the output instead records
+    them as not computable from the committed records, with a
+    supplementary slot-level Wilson interval on the total hit
+    count (hits = recall@10 x n_queries x 10, over n_queries x 10
+    returned slots), explicitly labelled as treating slots within
+    a query as independent and therefore narrower than a per-query
+    interval would be.
+- Post-churn stale rate: RESULTS.md already carries a Wilson
+  interval over returned slots for every churn cell. Where per-query
+  returned lists are re-derived (FAISS), a per-query stale-share
+  bootstrap (same seed and resample count) is reported alongside.
+- No verdict changes: H1 to H6 stand as registered. The intervals
+  are an amendment record only.
+
+Output: results/amendment_d14.json, written by the amendment script
+src/vectorbench/amendment_d14.py; the re-derived FAISS per-query
+recall arrays are saved in the same file.
+
+D14 results note (appended after the run, 2026-11-17): every
+re-derived FAISS aggregate reproduced its committed recall@10
+within 0.000003, so all FAISS intervals stand as registered. FAISS
+per-query bootstrap intervals (300 queries): unfiltered 0.967
+[0.957, 0.976]; tenant_t0 0.952 [0.941, 0.962]; tenant_t2 0.868
+[0.850, 0.885]; tenant_t5 (tight) 0.413 [0.393, 0.433];
+article_group 0.356 [0.325, 0.388]; post-churn raw unfiltered
+0.866 [0.853, 0.878] with per-query stale share 0.113 [0.102,
+0.125]; post-churn raw tight 0.391 [0.371, 0.412] with stale share
+0.105 [0.093, 0.117]; post-churn bookkeeping unfiltered 0.958
+[0.947, 0.968], tight 0.391 [0.371, 0.412], stale 0.000
+[0.000, 0.000]. Qdrant embedded: all seven cells degenerate at
+[1.000, 1.000]. pgvector: the four cells at exactly 1.000 are
+degenerate; the five remaining cells (unfiltered 0.978, tenant_t2
+0.979, article_group 0.988, post-churn unfiltered 0.976, trap
+tenant_t2 0.486) carry no per-query interval, as registered, with
+slot-level Wilson intervals on total hits recorded in the output
+file as a labelled supplement only. No verdict changed.
+
+## D15: Post-registration amendment: Qdrant server-mode rerun at the matched protocol (registered before the run)
+
+Recorded 2026-11-17, before the server binary was downloaded or any
+computation under this amendment ran. This is Deep step 1 of
+REPORT.md ("Next steps"), the study's largest named limitation:
+the committed Qdrant numbers were produced by the embedded local
+mode, whose filtered search is exact brute force by construction,
+at a reduced protocol (100 queries x 2 repetitions, D10), so they
+cannot evidence the production server's filtered HNSW.
+
+Specification, frozen before the run:
+
+- Server: the official Qdrant binary release, downloaded into a
+  scratch directory outside the repo; the exact version, source
+  URL and file hash are recorded in the output file. The server
+  runs on localhost with its storage in the scratch directory.
+  Nothing is installed system-wide.
+- Client and configuration: the repo's Qdrant adapter logic
+  (qdrant-client, collection with dense cosine vectors, HNSW
+  m = 32, ef_construct = 200, sparse BM25 vector, payload indexes
+  on tenant and article created before ingestion), with only the
+  client connection changed to the server URL.
+- Protocol: the matched protocol of the other two systems, 300
+  queries x 3 repetitions, on the cached corpus artifacts in
+  data/. Breadth is tuned on the unfiltered cell with the repo's
+  ladder rule (first of 40, 80, 120, 200, 320 reaching recall@10
+  at or above 0.95) and frozen, exactly as the registered study
+  ran it.
+- Cells: the five main cells (unfiltered, tenant_t0, tenant_t2,
+  tenant_t5 tight, article_group), then the registered churn step
+  (delete 10 percent, insert an equal number of held-out chunks,
+  seeds as in the harness) and the two post-churn cells
+  (unfiltered, tight), with stale rate. The hybrid cell is out of
+  scope for this amendment; the registered comparison is recall.
+- Per-query recall@10 is saved for every cell (the D14 lesson), and
+  per-query bootstrap intervals (same method as D14) are reported
+  for the server cells.
+- Comparison, stated in advance: server recall@10 per cell is
+  compared against the committed embedded-mode numbers, and the
+  report states plainly whether three headline readings change:
+  the 1.000 unfiltered recall, the hold at about 1 percent
+  selectivity (tight cell recall 1.000, shortfall 0), and the zero
+  stale rate after churn.
+- No verdict changes in this amendment: H3's published verdict
+  stands as registered; this amendment supplies the server
+  evidence H3's caveat says is missing, and any relabelling is a
+  decision for the study owner.
+
+Output: results/amendment_d15.json, written by the amendment script
+src/vectorbench/amendment_d15.py.
+
+D15 results note (appended after the run, 2026-11-17): server
+v1.20.2 (official release, musl build; the gnu build of the same
+release needs GLIBC 2.43 and does not start on this VM's GLIBC
+2.39, recorded in the output file). Tuning chose breadth 40, the
+same frozen value as the embedded record (ladder recall 0.9923).
+Server recall@10 at 300 queries x 3 repetitions, against the
+committed embedded numbers: unfiltered 0.990 [bootstrap 0.985,
+0.993] against embedded 1.000; tenant_t0 1.000 against 1.000
+(repetitions varied on the server: 1.000, 0.971, 0.931, unlike
+the deterministic embedded record; the headline value follows the
+harness convention of repetition 1); tenant_t2 1.000 against
+1.000; tenant_t5 tight 1.000, shortfall 0.000, against 1.000;
+article_group 1.000 against 1.000; post-churn unfiltered 0.960
+[0.951, 0.969] against 1.000, a drop of 0.029 from the server's
+own pre-churn cell, inside the H5 line of 0.05; post-churn tight
+1.000 against 1.000. Stale rate 0.000 in both post-churn cells,
+as committed. The three headline readings, plainly: the 1.000
+unfiltered recall does NOT hold exactly on the server (0.990;
+the embedded 1.000 was an artifact of exact search); the hold at
+about 1 percent selectivity DOES hold on the server product
+(tight recall 1.000, shortfall 0, so H3's falsification rule is
+not triggered); the zero stale rate after churn DOES hold.
+Server latency is far below the embedded record (tight-cell p95
+34.01 ms against 3,690.63 ms), measured on this throttled VM and
+reported in the output file without a latency claim. H3's
+published verdict is unchanged by this amendment, as registered;
+the server evidence its caveat asked for now exists.
+
+## D16: Note on the proposed recall-threshold arm (2026-11-17, not run)
+
+A gap-closure brief proposed running "the recall-threshold arm
+from ROADMAP (D1)" if it was small and fully specified in the
+record. It was not run, for reasons checked against the record
+itself: there is no ROADMAP.md file in this repo (the roadmap is
+the Deep-pass list inside REPORT.md, "Next steps"), and no item
+in that list, and no decision in this file, specifies a
+recall-threshold arm. D1 of this file is the corpus decision
+(SQuAD v1.1), not an arm. The closest item is Deep step 2,
+matched-recall Pareto curves (breadth swept per backend, recall,
+p95 and p99 reported at recall 0.90, 0.95 and 0.99, five runs per
+setting): it is a multi-backend sweep, not a small single arm,
+and it requires the pgvector backend, which cannot run in the
+current environment (no PostgreSQL). Running a reduced version
+under this name would invent a specification the record does not
+contain. Skipped, and recorded here so the skip is on the record;
+the item stays available as Deep step 2 for a run with all three
+backends available.
