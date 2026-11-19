@@ -342,3 +342,25 @@ cell again returns 1.000, the D17 outcome entry that follows this
 addendum is the final state of the item: a documented divergence,
 not an open gap. No verdict changes either way: H1 to H6 stand
 as registered.
+
+D17 addendum 3 outcome (2026-11-19): the dedicated article_group
+execution ran as registered, against a fresh
+pgvector/pgvector:0.8.0-pg16 container with the addendum 2
+ANALYZE step immediately after the adapter build (the Python
+runner ran in a python:3.12 container on the same host; the
+database environment of record is unchanged). Breadth tuning
+chose 40, as in the earlier executions. Fresh article_group
+recall@10 (repetition 1): 0.987667 against the committed 0.988,
+a difference of 0.000333, inside the 0.001 validation line, so
+the cell VALIDATES and carries its per-query bootstrap interval
+under the D14 method (10,000 resamples, seed 20261117): 0.988
+[0.984, 0.991], from 300 per-query values (37 below 1.0), saved
+in results/amendment_d17_pg080_analyzed_articlegroup.json. One
+contrast is recorded with no mechanism claimed: in execution 3
+the same cell read 1.000 with an all-1.0 per-query array
+identical to executions 1 and 2, while this dedicated execution,
+on a fresh container volume, returned a differentiated array
+that reproduces the committed aggregate. With this cell, all
+nine pgvector recall cells now carry per-query intervals; the
+D17 item is CLOSED. No verdict changed: H1 to H6 stand as
+registered.
