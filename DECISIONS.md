@@ -321,3 +321,24 @@ three output files. Beside the FAISS intervals from D14 (unfiltered
 tight 0.413 [0.393, 0.433]; article_group 0.356 [0.325, 0.388]), the
 pgvector side of the study now has per-query uncertainty for eight
 of nine cells. No verdict changed.
+
+D17 addendum 3 (2026-11-19, registered before the run it covers):
+one dedicated execution of the article_group cell only, under the
+execution 3 environment of record (archived official image
+pgvector/pgvector:0.8.0-pg16, ANALYZE on the chunks table
+immediately after the adapter build), ordered under Jesun
+finish-everything order of 2026-11-19. Executions 1 to 3 each
+returned article_group fresh recall 1.000 against the committed
+0.988; this execution isolates the one open cell so the item can
+be closed on direct evidence: the same run_cell mirror, the same
+breadth tuning, repetition 1 per-query capture, the D14 bootstrap
+unchanged, and the same validation rule (an interval is reported
+only if the fresh aggregate reproduces the committed 0.988 within
+0.001). Runner: src/vectorbench/amendment_d17_ag.py, a
+cell-restricted mirror of amendment_d17.py; amendment_d17.py
+itself is unchanged. Output:
+results/amendment_d17_pg080_analyzed_articlegroup.json. If the
+cell again returns 1.000, the D17 outcome entry that follows this
+addendum is the final state of the item: a documented divergence,
+not an open gap. No verdict changes either way: H1 to H6 stand
+as registered.
