@@ -387,3 +387,110 @@ under this name would invent a specification the record does not
 contain. Skipped, and recorded here so the skip is on the record;
 the item stays available as Deep step 2 for a run with all three
 backends available.
+## D17: Post-registration amendment: pgvector per-query recall intervals on a Docker host (registered 2026-11-18, before the run)
+
+D14 could not compute pgvector per-query intervals: per-query values
+were never saved and no PostgreSQL was available on the machines of
+record, so only the four cells at exactly 1.000 got (degenerate)
+intervals and the other five carry a labelled slot-level Wilson
+supplement. This amendment registers the run D14 pointed at.
+
+Specification, frozen before the run: the pgvector cells are
+re-executed against the official pgvector/pgvector:pg16 container
+(PostgreSQL 16, pgvector 0.8.0) on the Dell PowerEdge R610, with
+run_pgvector mirrored through the repo own run_cell (same build, same
+breadth tuning, same trap and churn sequence). Per-query recall is
+captured from repetition 1 for all nine recall cells (five main
+iterative cells, two trap cells, two post-churn cells). Intervals use
+the D14 method unchanged (per-query bootstrap, 10,000 resamples, seed
+20261117, percentile 2.5 and 97.5), imported from amendment_d14.
+Validation rule (D14): a cell interval is reported only if the fresh
+aggregate reproduces the committed results_pg/cells.json recall@10
+within 0.001; otherwise the discrepancy is reported instead of an
+interval. The hybrid cell is out of scope (it is not one of the nine
+recall cells).
+
+Machine history: staged on BlackBoxV2 (route lost before it ran),
+re-registered on BlackBoxV3 (no container runtime there), executed on
+the R610 under the order of 2026-11-18. Same plan, no content change.
+
+Output: results/amendment_d17.json, written by
+src/vectorbench/amendment_d17.py, with the per-query arrays saved.
+No verdict changes: H1 to H6 stand as registered.
+
+D17 setup note (2026-11-18): amendment_d14.py is not on the repository
+main (it lives on the unmerged gap-closure records branch), so the
+file was copied into this clone unchanged from the gap-closure working
+clone, md5-verified, purely as the method source this amendment
+imports. No content change to the method.
+
+D17 outcome (2026-11-18): executed on the R610 as registered, against
+the official pgvector/pgvector:pg16 image as pulled today, which now
+ships PostgreSQL 16.16 with pgvector 0.8.7 (the committed record ran
+on PostgreSQL 16.15 with pgvector 0.8.0). Five of the nine cells
+reproduce within the 0.001 validation line and carry per-query
+bootstrap intervals (10,000 resamples, seed 20261117): unfiltered
+0.9787 [0.971, 0.985]; tenant_t0 1.000 [1.000, 1.000]; tenant_t5 1.000
+[1.000, 1.000]; trap tenant_t5 1.000 [1.000, 1.000]; post-churn
+tenant_t5 1.000 [1.000, 1.000]. Four cells do NOT reproduce and carry
+no interval, per the registered rule: tenant_t2 fresh 1.000 vs
+committed 0.979; article_group fresh 1.000 vs committed 0.988;
+trap tenant_t2 fresh 1.000 vs committed 0.486; post-churn unfiltered
+fresh 0.979 vs committed 0.976 (outside by 0.003). On this pgvector
+version the filtered cells return the exact filtered top-10 (recall
+1.0), including the trap configuration whose overfiltering the study
+measures; the committed behaviour does not appear. The per-query
+arrays for all nine cells are saved in results/amendment_d17.json
+either way. No verdict changed.
+
+D17 addendum (2026-11-18, registered before the run it covers): a
+second execution of the same module, unchanged, against the archived
+official image pgvector/pgvector:0.8.0-pg16 (pgvector 0.8.0, the
+version of record), to test whether the four non-reproducing cells
+reproduce under the environment of record. Same validation rule.
+Output: results/amendment_d17_pg080.json.
+
+D17 addendum 2 (2026-11-18, registered before the run it covers):
+diagnosis and one-step environment repair. On both container
+executions the filtered cells returned the exact filtered top-10
+(recall 1.0), including the trap cell. EXPLAIN on the trap query
+showed the planner choosing a bitmap heap scan on the tenant B-tree
+plus a sort (an exact plan), with a row estimate of 297 against 6,342
+actual tenant_t2 rows: the freshly built container table carries no
+statistics (pg_stat shows no analyze, ever), so the exact plan looks
+cheap and the HNSW index is never used. The committed database, a
+long-lived install, carried analyzed tables. After a manual ANALYZE
+on the run table the same EXPLAIN flips to an index scan on
+chunks_hnsw with the filter applied after the scan, the mechanism
+the study measures. The repair is one step: amendment_d17.py runs
+ANALYZE on the chunks table immediately after the adapter build,
+restoring the environment of record; the module is otherwise
+unchanged, the run is against the 0.8.0 container, and the output is
+results/amendment_d17_pg080_analyzed.json. Same validation rule.
+
+D17 final outcome (2026-11-18): three registered executions on the
+R610. Executions 1 (pgvector 0.8.7, current pg16 image) and 2
+(pgvector 0.8.0, archived image) ran without table statistics and
+are recorded in results/amendment_d17.json and
+results/amendment_d17_pg080.json; execution 3 (0.8.0 plus the
+addendum 2 ANALYZE step) is recorded in
+results/amendment_d17_pg080_analyzed.json. The first outcome entry
+above framed the gap as a version difference; the addendum 2
+diagnosis supersedes that framing: the operative difference was
+planner statistics, not the pgvector version. Under the validation
+rule, eight of the nine cells carry a per-query bootstrap interval
+from at least one execution (10,000 resamples, seed 20261117):
+unfiltered 0.978 [0.971, 0.985]; tenant_t0 1.000 [1.000, 1.000];
+tenant_t2 0.979 [0.973, 0.985]; tenant_t5 1.000 [1.000, 1.000]; trap
+tenant_t2 0.486 [0.464, 0.508] (the analyzed execution reproduced
+the committed 0.4857 exactly); trap tenant_t5 1.000 [1.000, 1.000];
+post-churn unfiltered 0.976 [0.969, 0.983] (the 0.8.0 execution
+reproduced the committed value exactly); post-churn tenant_t5 1.000
+[1.000, 1.000]. One cell carries no interval: article_group returned
+1.000 in all three environments against the committed 0.988, so no
+execution validated for it; its per-query arrays are saved in all
+three output files. Beside the FAISS intervals from D14 (unfiltered
+0.967 [0.957, 0.976]; tenant_t2 0.868 [0.850, 0.885]; tenant_t5
+tight 0.413 [0.393, 0.433]; article_group 0.356 [0.325, 0.388]), the
+pgvector side of the study now has per-query uncertainty for eight
+of nine cells. No verdict changed.
